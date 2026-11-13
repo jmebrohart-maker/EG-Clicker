@@ -3,7 +3,7 @@
 </p>
 <h1 align="center">EG-Clicker</h1>
 <p align="center"><strong>Audio-triggered desktop automation, with a modern EG-branded interface.</strong></p>
-<p align="center">Built by Ehrhart Group LLC · Python desktop app + Rust launcher</p>
+<p align="center">Built by Ehrhart Group LLC · Desktop automation for Fedora and Windows</p>
 <p align="center">
   <a href="https://github.com/jmebrohart-maker/EG-Clicker/releases/tag/v3.1.0"><img src="https://img.shields.io/badge/release-v3.1.0-438dff?style=flat-square" alt="Release v3.1.0"></a>
   <a href="https://github.com/jmebrohart-maker/EG-Clicker/actions/workflows/ci.yml"><img src="https://github.com/jmebrohart-maker/EG-Clicker/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -11,11 +11,22 @@
   <img src="https://img.shields.io/badge/Fedora-44%20%7C%20KDE%20Wayland-95a9c5?style=flat-square" alt="Fedora 44 KDE Wayland">
 </p>
 <p align="center">
-  <a href="https://github.com/jmebrohart-maker/EG-Clicker/releases/latest"><strong>Download</strong></a> ·
+  <a href="#choose-your-edition"><strong>Downloads</strong></a> ·
   <a href="#install-and-run">Install</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
   <a href="https://github.com/jmebrohart-maker/EG-Clicker/issues/new/choose">Report an issue</a>
 </p>
+
+## Choose your edition
+
+| Platform | Download | Project guide |
+| --- | --- | --- |
+| **Windows 11 x64** | [One-click Setup / Portable ZIP — Preview](https://github.com/jmebrohart-maker/EG-Clicker/releases/tag/windows-v3.1.0) | [Windows project](windows/README.md) |
+| **Fedora 44 KDE Wayland** | [Fedora 3.1.0 install bundles](https://github.com/jmebrohart-maker/EG-Clicker/releases/tag/v3.1.0) | [Fedora install command](#install-and-run) |
+
+The Windows edition includes its own runtime and native uninstaller. Both editions
+use the EG interface, persistent settings and Anywhere-on-desktop mode. The Windows
+project is isolated under `windows/` with its own build, tests and releases.
 
 ![EG-Clicker interface](docs/interface.png)
 

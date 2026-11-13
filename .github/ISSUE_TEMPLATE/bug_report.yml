@@ -6,15 +6,15 @@ body:
   - type: input
     id: version
     attributes:
-      label: App version
-      placeholder: "3.1.0 (shown in the app header)"
+      label: App version and edition
+      placeholder: "3.1.0 Windows preview or 3.1.0 Fedora (shown in the app header)"
     validations:
       required: true
   - type: input
     id: environment
     attributes:
       label: Desktop and operating system
-      placeholder: "Fedora 44, KDE Plasma Wayland"
+      placeholder: "Windows 11 x64, or Fedora 44 KDE Plasma Wayland"
     validations:
       required: true
   - type: dropdown

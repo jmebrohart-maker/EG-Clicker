@@ -1,5 +1,12 @@
 # Changelog
 
+## Windows 3.1.0 Preview — 2026-11-13
+
+- Modern EG interface and a separate Windows project under `windows/`.
+- Self-contained per-user Setup executable and portable ZIP; no system Python or WinGet required.
+- Native Win32 DPI/display/input handling and selected-browser session audio metering.
+- Hash-locked build dependencies, bundled license notices and native install/uninstall validation.
+
 ## [3.1.0] — 2026-11-13
 
 ### Added
