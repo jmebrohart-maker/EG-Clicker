@@ -6,7 +6,7 @@ fail(){ echo; echo "INSTALL FAILED: $*" >&2; echo 'Press Enter to close.'; read 
 trap 'echo "Installer stopped at line $LINENO (exit code $?)." >&2' ERR
 
 printf '\n===== EG-Clicker • Fedora 44 KDE Wayland =====\n\n'
-[[ -r "$HERE/EG-Clicker.py" && -r "$HERE/eg_platform.py" ]] || fail "EG-Clicker.py and eg_platform.py must be beside the installer. Extract the ZIP first."
+[[ -r "$HERE/EG-Clicker.py" && -r "$HERE/eg_platform.py" && -r "$HERE/launcher.py" ]] || fail "EG-Clicker.py, eg_platform.py and launcher.py must be beside the installer. Extract the ZIP first."
 [[ -r "$HERE/eg_logo_icon.png" ]] || fail 'Missing icon file; extract entire ZIP.'
 [[ $(id -u) != 0 ]] || fail 'Run as your desktop user, not as root.'
 [[ ${XDG_SESSION_TYPE:-} == wayland ]] || fail 'Log into KDE Plasma Wayland, then run this installer.'
@@ -67,6 +67,7 @@ fi
 DEST="$HOME/.local/share/eg-clicker"
 mkdir -p -m 0700 "$DEST" "$HOME/.local/share/applications" "$HOME/.local/share/icons/hicolor/96x96/apps"
 install -m 0644 "$HERE/EG-Clicker.py" "$DEST/EG-Clicker.py"
+install -m 0644 "$HERE/launcher.py" "$DEST/launcher.py"
 install -m 0644 "$HERE/eg_platform.py" "$DEST/eg_platform.py"
 install -m 0700 "$HERE/uninstall-fedora.sh" "$DEST/uninstall-fedora.sh"
 install -m 0644 "$HERE/eg_logo_icon.png" "$HOME/.local/share/icons/hicolor/96x96/apps/eg-clicker.png"
@@ -79,7 +80,7 @@ Version=1.0
 Type=Application
 Name=EG-Clicker
 Comment=Ehrhart Group browser audio auto-clicker
-Exec=/usr/bin/python3 -c "import runpy,pathlib;runpy.run_path(str(pathlib.Path.home() / '.local/share/eg-clicker/EG-Clicker.py'),run_name='__main__')"
+Exec=/usr/bin/python3 -c "import runpy,pathlib,sys;sys.path.insert(0,str(pathlib.Path.home() / '.local/share/eg-clicker'));runpy.run_path(str(pathlib.Path.home() / '.local/share/eg-clicker/EG-Clicker.py'),run_name='__main__')"
 TryExec=/usr/bin/python3
 Icon=eg-clicker
 Terminal=false

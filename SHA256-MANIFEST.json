@@ -1,9 +1,18 @@
 {
+  ".gitignore": "43d7c9ca626d1cffb18a858e2e9afde634a8f17e789705deee5c473be66d02b1",
+  "Cargo.lock": "cde57e529ee17872702ba4321752611d794ed6779e9d957defe49aff6e7f6f3a",
+  "Cargo.toml": "44ae429daab3843663ca0c610086caf5f35b47d29283c533d4522c712235ed76",
+  "EG-Clicker.py": "c72c50fe71566241c24635ffb10e2fb6b2ecd3052eb4427bf252a8f61a1171cd",
   "Install EG-Clicker.desktop": "fcef7dca44c7ae9af15a3130ead88d3712baa3ccc4a58454ba9397dcc29e5462",
-  "install-fedora.sh": "8d4084b9cdd36cb830173f8a41ee0e91a56c9cd964ed5931e98635e9af9cd20a",
-  "uninstall-fedora.sh": "523443bf40cee8331e6a55db37af02f95389d3bf19106733d052a68303b2ff84",
-  "README.txt": "1a665dd53bb9d62f73398357f086256687fac8b50f42ed3ca1d02beaa31dfb7e",
-  "EG-Clicker.py": "b25d82138226d0d8fcb8361b153e637dba9df2897795de5df33736fdec87a3e6",
+  "LICENSE": "380520c734051ad016cfc112014b6b9fdf1a2de9b6a0672744ef9c53c8cd0cd9",
+  "README.md": "b7c25360be43fef05c2e24c96aa215dfa82de11d582d7aa8859b0894b9ea29e5",
+  "README.txt": "b7c25360be43fef05c2e24c96aa215dfa82de11d582d7aa8859b0894b9ea29e5",
   "eg_logo_icon.png": "f9fb61c2828233e6c0e83609f68685ba90d3c02ed2a2ba233022f50357f4b3fa",
-  "eg_platform.py": "4b52fe586f0c535a0aeb5461a87c73be230e4828d9a93d4072fb819b0c5eb2ac"
+  "eg_platform.py": "4b52fe586f0c535a0aeb5461a87c73be230e4828d9a93d4072fb819b0c5eb2ac",
+  "install-fedora.sh": "416e019fadbfb4c2310ff8fe9e817965a327dcb93fb710bf92b90165a89b7ba6",
+  "launch.sh": "7e0324f8596e34974702975d2c7b0d89ebdafdb0056f4f2c1c37d028f0598d19",
+  "launcher.py": "6628608b44fe4989a93dd957fec56e71fd26cd2c83d94ee3e292aff1d6382140",
+  "src/main.rs": "b7d4f6f849aabe33578c7a6d8d007d21b8b87e7ccb7dbd0c331fa04f52d6c818",
+  "tests/test_app.py": "711942db21618af0751558e4a4773d585a06ece3f3919379afd21e4cf755207a",
+  "uninstall-fedora.sh": "523443bf40cee8331e6a55db37af02f95389d3bf19106733d052a68303b2ff84"
 }

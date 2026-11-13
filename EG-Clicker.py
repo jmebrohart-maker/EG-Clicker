@@ -30,13 +30,18 @@ import tkinter as tk
 import webbrowser
 from tkinter import filedialog, scrolledtext
 
-VERSION = '2.3.3'
+VERSION = '3.0.0'
 APP_TITLE = 'EG-Clicker • Ehrhart Group LLC'
 from eg_platform import (IS_WINDOWS, BROWSERS, CONFIG, LEGACY_CONFIG, LOG_FILE,
     run_cmd, pointer_position, parse_screens_json, parse_screens_text, screen_layout,
     find_screen, layout_key, desktop_bounds, move_to, click_at,
     browser_audio_state, init_audio_thread, close_audio_thread, init_desktop, pointer_health)
-VERIFY_TOLERANCE = 4
+# Defaults match the last known-working Fedora 44 release.
+DEFAULT_RELIABILITY = {'retries_enabled': False, 'retry_count': 1,
+                       'tolerance_px': 4, 'settle_ms': 200}
+MAX_RETRIES = 5
+MAX_TOLERANCE = 12
+
 
 NAVY = '#0a1634'
 NAVY2 = '#10224a'
@@ -58,10 +63,31 @@ def display_point(p):
     return f'({p[0]}, {p[1]})'
 
 
+def read_config(path=None):
+    path = CONFIG if path is None else path
+    try:
+        value = json.loads(path.read_text(encoding='utf-8'))
+        return value if isinstance(value, dict) else {}
+    except (OSError, ValueError, TypeError):
+        return {}
+
+
+def save_launch_url(url):
+    from urllib.parse import urlsplit
+    url = url.strip()
+    parsed = urlsplit(url)
+    if parsed.scheme not in ('http', 'https') or not parsed.hostname:
+        raise ValueError('Enter a full http:// or https:// website URL.')
+    record = read_config()
+    record['launch_url'] = url
+    _secure_atomic_json(CONFIG, record)
+    return url
+
+
 def load_target():
     for path in (CONFIG, LEGACY_CONFIG):
         try:
-            item = json.loads(path.read_text(encoding='utf-8'))
+            item = read_config(path)
             if isinstance(item.get('layout'), list) and 'x' in item and 'y' in item:
                 return (int(item['x']), int(item['y'])), item['layout'], str(path)
         except (OSError, ValueError, TypeError):
@@ -71,7 +97,7 @@ def load_target():
 
 def load_browser():
     try:
-        name = json.loads(CONFIG.read_text(encoding='utf-8')).get('browser', 'Firefox')
+        name = read_config(CONFIG).get('browser', 'Firefox')
         return name if name in BROWSERS else 'Firefox'
     except (OSError, ValueError, TypeError):
         return 'Firefox'
@@ -106,8 +132,14 @@ def _secure_atomic_json(path, record):
 
 def save_target_record(point, screens, browser='Firefox'):
     _ensure_private_dir(CONFIG.parent)
-    record = {'schema': 10, 'x': point[0], 'y': point[1],
-              'layout': layout_key(screens), 'browser': browser}
+    try:
+        record = read_config(CONFIG)
+        if not isinstance(record, dict):
+            record = {}
+    except (OSError, ValueError, TypeError):
+        record = {}
+    record.update({'schema': 10, 'x': point[0], 'y': point[1],
+                   'layout': layout_key(screens), 'browser': browser})
     _secure_atomic_json(CONFIG, record)
     return record
 
@@ -115,11 +147,48 @@ def save_target_record(point, screens, browser='Firefox'):
 def save_browser_choice(browser):
     _ensure_private_dir(CONFIG.parent)
     try:
-        record = json.loads(CONFIG.read_text(encoding='utf-8'))
+        record = read_config(CONFIG)
     except (OSError, ValueError, TypeError):
         record = {}
     record['browser'] = browser
     _secure_atomic_json(CONFIG, record)
+
+
+def normalize_reliability(raw):
+    raw = raw if isinstance(raw, dict) else {}
+    def number(key, default, lo, hi):
+        try:
+            n = int(raw.get(key, default))
+        except (ValueError, TypeError, OverflowError):
+            n = default
+        return max(lo, min(hi, n))
+    return {
+        'retries_enabled': raw.get('retries_enabled', False) is True,
+        'retry_count': number('retry_count', 1, 0, MAX_RETRIES),
+        'tolerance_px': number('tolerance_px', 4, 0, MAX_TOLERANCE),
+        'settle_ms': number('settle_ms', 200, 100, 700),
+    }
+
+
+def load_reliability():
+    try:
+        data = read_config(CONFIG)
+        return normalize_reliability(data.get('pointer_reliability', {}))
+    except (OSError, ValueError, TypeError, AttributeError):
+        return dict(DEFAULT_RELIABILITY)
+
+
+def save_reliability(settings):
+    settings = normalize_reliability(settings)
+    try:
+        data = read_config(CONFIG)
+        if not isinstance(data, dict):
+            data = {}
+    except (OSError, ValueError, TypeError):
+        data = {}
+    data['pointer_reliability'] = settings
+    _secure_atomic_json(CONFIG, data)
+    return settings
 
 
 class LogWriter:
@@ -179,6 +248,13 @@ class App:
         self.target, self.saved_layout, source = load_target()
         self.browser = load_browser()
         self.browser_var = tk.StringVar(value=self.browser)
+        self.launch_url_var = tk.StringVar(value=read_config().get('launch_url', 'https://www.google.com'))
+        self.reliability = load_reliability()
+        self.retry_enabled_var = tk.BooleanVar(value=self.reliability['retries_enabled'])
+        self.retry_count_var = tk.StringVar(value=str(self.reliability['retry_count']))
+        self.tolerance_var = tk.StringVar(value=str(self.reliability['tolerance_px']))
+        self.settle_var = tk.StringVar(value=str(self.reliability['settle_ms']))
+        self.reliability_open = False
         self.verified = False
         self.click_count = 0
         self.action_lock = threading.Lock()
@@ -192,7 +268,7 @@ class App:
         self.move_result = 'UNTESTED'
 
         root.title(APP_TITLE)
-        root.geometry('910x470')
+        root.geometry('910x530')
         root.minsize(740, 445)
         root.configure(bg=NAVY)
 
@@ -207,6 +283,7 @@ class App:
         if source:
             self.log('TARGET', f'Loaded saved location {self.target} from {source}; ready for use after checking monitor layout.')
         self.log('INFO', 'Movement checks are optional; every actual click still verifies the live pointer position.')
+        self.log('SETTINGS', f'Pointer reliability: {self.reliability}')
         root.protocol('WM_DELETE_WINDOW', self.close)
         self.refresh()
         self.refresh_diagnostics()
@@ -259,6 +336,14 @@ class App:
         tk.Label(browser_bar, text='Audio stop → 2s quiet → saved click', bg=NAVY2,
                  fg=MUTED, font=('Sans', 9)).pack(side='right', padx=8)
 
+        launch = tk.Frame(self.root, bg=NAVY2, padx=15, pady=6)
+        launch.pack(fill='x', padx=15)
+        tk.Label(launch, text='Website', bg=NAVY2, fg=WHITE).pack(side='left')
+        tk.Entry(launch, textvariable=self.launch_url_var, bg=PANEL2, fg=WHITE,
+                 insertbackground=WHITE).pack(side='left', fill='x', expand=True, padx=10)
+        tk.Button(launch, text='Launch Browser', command=self.launch_browser,
+                  bg=BLUE, fg=WHITE, padx=12).pack(side='right')
+
         ctl = tk.Frame(self.root, bg=NAVY2, padx=14, pady=11, highlightbackground=LINE, highlightthickness=1)
         ctl.pack(fill='x', padx=15, pady=(10, 7))
         tk.Label(ctl, text='TARGET & AUTOMATION', bg=NAVY2, fg=WHITE,
@@ -299,6 +384,52 @@ class App:
             button.pack(side='left', padx=(0, 7), pady=2)
             if caption.startswith('Show Diagnostics'):
                 self.diagnostics_button = button
+
+        # Separate, collapsed advanced settings panel (not the testing section).
+        self.reliability_button = tk.Button(self.root,
+            text='Pointer Reliability Settings ▼', command=self.toggle_reliability,
+            bg=NAVY2, fg=SKY, activebackground=PANEL2, activeforeground=WHITE,
+            relief=tk.FLAT, font=('Sans', 10, 'bold'), cursor='hand2', pady=7)
+        self.reliability_button.pack(fill='x', padx=15, pady=(0, 4))
+        self.reliability_frame = tk.Frame(self.root, bg=NAVY2, padx=15, pady=12,
+                                         highlightbackground=LINE, highlightthickness=1)
+        tk.Label(self.reliability_frame, text='POINTER RELIABILITY • ADVANCED',
+                 bg=NAVY2, fg=WHITE, font=('Sans', 11, 'bold')).grid(
+                 row=0, column=0, columnspan=3, sticky='w', pady=(0, 10))
+        chk = tk.Checkbutton(self.reliability_frame, text='Enable automatic movement retries',
+                            variable=self.retry_enabled_var,
+                            bg=NAVY2, fg=WHITE, activebackground=NAVY2,
+                            activeforeground=WHITE, selectcolor=PANEL2,
+                            font=('Sans', 10), anchor='w')
+        chk.grid(row=1, column=0, columnspan=3, sticky='w', pady=4)
+        for row, (label, variable, values, help_text) in enumerate([
+            ('Extra retries', self.retry_count_var, tuple(str(n) for n in range(0, MAX_RETRIES+1)),
+             '0–5 extra moves if positioning misses'),
+            ('Tolerance (px)', self.tolerance_var, tuple(str(n) for n in range(MAX_TOLERANCE+1)),
+             'Max X/Y pixel error; 0 requires exact match'),
+            ('Settle delay (ms)', self.settle_var,
+             ('100', '150', '200', '250', '300', '400', '500', '700'),
+             'Wait after moving before checking coordinates'),
+        ], start=2):
+            tk.Label(self.reliability_frame, text=label, bg=NAVY2, fg=WHITE,
+                     anchor='w', font=('Sans', 10)).grid(row=row, column=0, sticky='w', pady=5)
+            opt = tk.OptionMenu(self.reliability_frame, variable, *values)
+            opt.configure(bg=PANEL2, fg=WHITE, activebackground=BLUE,
+                          activeforeground=WHITE, relief=tk.FLAT, highlightthickness=0,
+                          width=8, font=('Sans', 10))
+            opt['menu'].configure(bg=PANEL2, fg=WHITE)
+            opt.grid(row=row, column=1, sticky='w', padx=(12, 16))
+            tk.Label(self.reliability_frame, text=help_text, bg=NAVY2, fg=MUTED,
+                     font=('Sans', 9), anchor='w').grid(row=row, column=2, sticky='w')
+        self.reliability_frame.grid_columnconfigure(2, weight=1)
+        tk.Button(self.reliability_frame, text='Restore Safe Defaults',
+                  command=self.reset_reliability, bg=PANEL2, fg=WHITE,
+                  activebackground=BLUE, relief=tk.FLAT, font=('Sans', 9),
+                  padx=9, pady=6).grid(row=5, column=0, columnspan=2, sticky='w', pady=(10, 0))
+
+        tk.Button(self.reliability_frame, text='Save Settings',
+                  command=self.apply_reliability, bg=BLUE, fg=WHITE,
+                  padx=12, pady=6).grid(row=5, column=2, sticky='e', pady=(10, 0))
 
         self.arm_label = tk.Label(ctl, text='DISARMED', bg=NAVY2, fg=RED,
                                    font=('Sans', 10, 'bold'), anchor='w')
@@ -354,26 +485,84 @@ class App:
             self.testing_frame.pack_forget()
             self.testing_open = False
             self.testing_button.configure(text='Testing & Troubleshooting ▼')
-            self.root.geometry('910x470')
+            self.resize_panels()
         else:
             # Pack between main controls and the status note.
             self.testing_frame.pack(fill='x', padx=15, pady=(2, 7), before=self.note_label.master)
             self.testing_open = True
             self.testing_button.configure(text='Hide Testing & Troubleshooting ▲')
-            self.root.geometry('910x570')
+            self.resize_panels()
+
+    def toggle_reliability(self):
+        if self.reliability_open:
+            self.reliability_frame.pack_forget()
+            self.reliability_button.configure(text='Pointer Reliability Settings ▼')
+            self.reliability_open = False
+        else:
+            self.reliability_frame.pack(fill='x', padx=15, pady=(0, 8),
+                                        after=self.reliability_button)
+            self.reliability_button.configure(text='Hide Pointer Reliability Settings ▲')
+            self.reliability_open = True
+        self.resize_panels()
+
+    def resize_panels(self):
+        height = 530 + (100 if self.testing_open else 0) + (260 if self.reliability_open else 0)
+        if self.diagnostics_open:
+            height += 320
+        self.root.geometry(f'910x{min(height, 980)}')
+
+    def launch_browser(self):
+        try:
+            url = save_launch_url(self.launch_url_var.get())
+            self.launch_url_var.set(url)
+            from launcher import launch_browser
+            launch_browser(self.browser, url)
+            self.note('INFO', f'Opened {self.browser}. Save Next, then Arm to start monitoring.')
+        except (ValueError, OSError, RuntimeError) as exc:
+            self.note('ERROR', f'Launch failed: {exc}')
+
+    def apply_reliability(self):
+        updated = normalize_reliability({
+            'retries_enabled': self.retry_enabled_var.get(),
+            'retry_count': self.retry_count_var.get(),
+            'tolerance_px': self.tolerance_var.get(),
+            'settle_ms': self.settle_var.get(),
+        })
+        try:
+            updated = save_reliability(updated)
+        except OSError as exc:
+            self.note('ERROR', f'Could not save pointer settings: {exc}')
+            return False
+        self.armed = False
+        self.reliability = updated
+        self.retry_count_var.set(str(updated['retry_count']))
+        self.tolerance_var.set(str(updated['tolerance_px']))
+        self.settle_var.set(str(updated['settle_ms']))
+        self.note('SETTINGS', 'Settings saved. Re-arm to resume automation.')
+        self.log('SETTINGS', f'Updated pointer reliability: {updated}')
+        return True
+
+    def reset_reliability(self):
+        d = DEFAULT_RELIABILITY
+        self.retry_enabled_var.set(d['retries_enabled'])
+        self.retry_count_var.set(str(d['retry_count']))
+        self.tolerance_var.set(str(d['tolerance_px']))
+        self.settle_var.set(str(d['settle_ms']))
+        if self.apply_reliability():
+            self.note('SETTINGS', 'Restored last known-working pointer defaults.')
 
     def toggle_diagnostics(self):
         if self.diagnostics_open:
             self.diagnostics_frame.pack_forget()
             self.diagnostics_button.configure(text='Show Diagnostics ▼')
             self.diagnostics_open = False
-            self.root.geometry('910x570')
+            self.resize_panels()
         else:
             self.diagnostics_frame.pack(**self._diagnostics_pack_options,
                                         before=self.footer)
             self.diagnostics_button.configure(text='Hide Diagnostics ▲')
             self.diagnostics_open = True
-            self.root.geometry('910x900')
+            self.resize_panels()
 
     def status_tile(self, parent, title, index):
         frame = tk.Frame(parent, bg=NAVY2, highlightbackground=LINE, highlightthickness=1, padx=13, pady=11)
@@ -398,6 +587,7 @@ class App:
 
     def snapshot_diagnostics(self):
         self.log('DIAG', '===== diagnostic snapshot =====')
+        self.log('DIAG', f'pointer_reliability={self.reliability}')
         self.log('DIAG', f'platform={os.name} browser={self.browser} saved_target={self.target} '
                  f'verified={self.verified} armed={self.armed}')
         try:
@@ -509,20 +699,32 @@ class App:
             self.log('POINTER', f'{source} action={"CLICK" if click else "MOVE ONLY"}; '
                      f'before={before} on={before_screen}; target={target} on={target_screen}')
             self.log('POINTER', f'Global target {target}; backend={"Win32" if IS_WINDOWS else "waytool"}.')
-            move_to(target, trace=self.log)
-            time.sleep(.2)
-            actual = pointer_position()
-            actual_screen = find_screen(*actual, screens)
-            delta = (target[0] - actual[0], target[1] - actual[1])
-            self.log('POINTER', f'AFTER MOVE actual={actual} on={actual_screen}; '
-                     f'expected={target} on={target_screen}; error_target_minus_actual={delta}')
-            if (abs(delta[0]) > VERIFY_TOLERANCE or abs(delta[1]) > VERIFY_TOLERANCE):
+            # Take a snapshot so a GUI change cannot alter an in-flight click.
+            settings = dict(self.reliability)
+            tolerance = settings['tolerance_px']
+            extra = settings['retry_count'] if settings['retries_enabled'] else 0
+            settle = settings['settle_ms'] / 1000
+            self.log('SETTINGS', f'Action policy retries={extra}, tolerance={tolerance}px, settle={settings["settle_ms"]}ms')
+            for attempt in range(1, extra + 2):
+                if source == 'Audio' and not self.armed:
+                    self.log('INFO', 'Disarmed during positioning; cancelled.')
+                    return False
+                # No click until the current actual position has been checked.
+                move_to(target, trace=self.log)
+                time.sleep(settle)
+                actual = pointer_position()
+                actual_screen = find_screen(*actual, screens)
+                delta = (target[0] - actual[0], target[1] - actual[1])
+                self.log('POINTER', f'AFTER MOVE attempt={attempt}/{extra + 1} '
+                         f'actual={actual} on={actual_screen}; expected={target} '
+                         f'on={target_screen}; delta={delta}')
+                if actual_screen == target_screen and max(abs(delta[0]), abs(delta[1])) <= tolerance:
+                    break
+                if attempt <= extra:
+                    self.log('RETRY', f'Position outside {tolerance}px tolerance; retrying movement.')
+            else:
                 self.verified = False
                 self.move_result = 'FAILED'
-                min_x, min_y, _, _ = desktop_bounds(screens)
-                if abs(abs(delta[0]) - min_x) <= VERIFY_TOLERANCE and abs(delta[1]) <= VERIFY_TOLERANCE:
-                    self.log('HINT', f'X error is equal to desktop X origin {min_x}. '
-                             'Possible KWin / Waytool coordinate origin mismatch. No automatic correction.')
                 raise RuntimeError(f'Pointer landed at {actual} on {actual_screen}; '
                                    f'expected {target} on {target_screen}, delta={delta}. NO CLICK.')
             if not click:
@@ -532,7 +734,8 @@ class App:
                 return True
             # Cross-check before sending a click; never click at an unverified location.
             latest = pointer_position()
-            if max(abs(latest[0]-target[0]), abs(latest[1]-target[1])) > VERIFY_TOLERANCE:
+            if (find_screen(*latest, screens) != target_screen or
+                    max(abs(latest[0]-target[0]), abs(latest[1]-target[1])) > tolerance):
                 self.verified = False
                 raise RuntimeError('Pointer changed before click; cancelled')
             if source == 'Audio' and not self.armed:
@@ -541,19 +744,33 @@ class App:
             self.log('CLICK', f'Sending click at {target}; pre-click pointer={latest}.')
             click_at(target, trace=self.log)
             self.click_count += 1
-            time.sleep(.18)
+            time.sleep(settle)
             post = pointer_position()
             self.log('CLICK', f'Click command returned success. Post-click pointer={post}; '
                      'Note: cannot independently confirm website navigation.')
             self.note('SUCCESS', f'Click command sent at {target}; count={self.click_count}.')
-            # Restore only if pointer is still parked at the target.
-            if max(abs(post[0]-target[0]), abs(post[1]-target[1])) <= VERIFY_TOLERANCE:
+            # Keep the original conservative behavior: no fighting manual input.
+            # A settling interval helps when KWin reports transient coordinates.
+            if max(abs(post[0]-target[0]), abs(post[1]-target[1])) <= tolerance:
                 if find_screen(*before, screens):
                     try:
                         move_to(before, trace=self.log)
                         back = pointer_position()
                         self.log('POINTER', f'Pointer restore requested={before}; actual={back}')
-                    except RuntimeError as exc:
+                        # Retrying restoration is only safe if the cursor is still
+                        # at the click target; never chase an actively used pointer.
+                        for return_attempt in range(extra):
+                            if max(abs(back[0]-before[0]), abs(back[1]-before[1])) <= tolerance:
+                                break
+                            if max(abs(back[0]-target[0]), abs(back[1]-target[1])) > tolerance:
+                                self.log('WARN', 'Return not at original or click target; manual movement possible; no retry.')
+                                break
+                            self.log('RETRY', f'Restore retry {return_attempt+1}/{extra}; cursor stayed at target.')
+                            move_to(before, trace=self.log)
+                            time.sleep(settle)
+                            back = pointer_position()
+                            self.log('POINTER', f'Pointer restore retry actual={back}; expected={before}')
+                    except (RuntimeError, OSError) as exc:
                         self.log('WARN', f'Restore failed: {exc}')
             else:
                 self.log('WARN', 'Pointer not at target after click, so automatic restore was skipped.')
