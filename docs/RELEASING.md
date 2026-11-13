@@ -22,3 +22,15 @@
 
 Keep the previous releases and tags available for existing links. Signatures
 must only be claimed when a verifiable signing process actually produced them.
+
+## GitHub Actions publishing
+
+After tagging a tested commit, open **Actions → Release → Run workflow** on the
+main branch. Enter the existing `vX.Y.Z` tag. Leave **Publish** unchecked to
+prepare a draft, or enable it to publish after verification.
+
+The workflow packages that exact tag, uploads only to a draft release, downloads
+and verifies the uploaded checksums, and optionally publishes it as latest. It
+uses GitHub's repository-scoped token; no personal access token or local upload
+credentials are required. Published release assets are not overwritten. Existing
+curated draft notes are preserved; a new draft gets generated notes.

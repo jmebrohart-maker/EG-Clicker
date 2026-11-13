@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to package
+        required: true
+        default: v3.1.0
+        type: string
+      publish:
+        description: Publish as latest after upload verification
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Build, verify, and publish release bundles
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      EG_TAG: ${{ inputs.tag }}
+    steps:
+      - name: Validate version tag
+        run: |
+          [[ "$EG_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Use an existing vX.Y.Z tag.'; exit 1; }
+      - name: Check out the tagged source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify tag and build bundles
+        run: |
+          test "$(git rev-parse HEAD)" = "$(git rev-parse "$EG_TAG^{commit}")"
+          /usr/bin/python3 scripts/verify_manifest.py
+          /usr/bin/python3 scripts/build_release.py --version "${EG_TAG#v}" --output-dir "$RUNNER_TEMP/eg-release"
+      - name: Upload to a draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view "$EG_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$EG_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --draft --title "EG-Clicker ${EG_TAG#v}" --generate-notes
+          fi
+          EG_DRAFT="$(gh release view "$EG_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq '.isDraft')"
+          test "$EG_DRAFT" = true || { echo 'Refusing to replace assets on a published release.'; exit 1; }
+          gh release upload "$EG_TAG" --repo "$GITHUB_REPOSITORY" --clobber "$RUNNER_TEMP/eg-release/EG-Clicker-v${EG_TAG#v}.tar.gz" "$RUNNER_TEMP/eg-release/EG-Clicker-v${EG_TAG#v}.zip" "$RUNNER_TEMP/eg-release/SHA256SUMS"
+      - name: Verify uploaded downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/eg-download-check"
+          gh release download "$EG_TAG" --repo "$GITHUB_REPOSITORY" --dir "$RUNNER_TEMP/eg-download-check"
+          cmp "$RUNNER_TEMP/eg-release/SHA256SUMS" "$RUNNER_TEMP/eg-download-check/SHA256SUMS"
+          cd "$RUNNER_TEMP/eg-download-check"
+          sha256sum --check SHA256SUMS
+      - name: Publish verified release
+        if: inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "$EG_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
