@@ -15,7 +15,7 @@ through the Fedora authorization dialog, installs EG-Clicker, and launches it:
   EG_INSTALL_DIR="$(mktemp -d)"
   trap 'rm -rf -- "$EG_INSTALL_DIR"' EXIT
   curl --fail --location --show-error --retry 3 \
-    'https://github.com/jmebrohart-maker/EG-Clicker/archive/978fb4bcf475d283fcc6caaaa0cc86eeb9f7dbc4.tar.gz' \
+    'https://github.com/jmebrohart-maker/EG-Clicker/archive/90468a9a9e5f504e3cf18f9115c21aee93e3660c.tar.gz' \
     --output "$EG_INSTALL_DIR/eg-clicker.tar.gz"
   tar -xzf "$EG_INSTALL_DIR/eg-clicker.tar.gz" \
     --strip-components=1 -C "$EG_INSTALL_DIR"
@@ -158,6 +158,19 @@ Automated checks cover config recovery and persistence, browser launch arguments
 settings callbacks, and pointer verification with mocked desktop commands.
 They do not establish live Fedora Wayland pointer/audio behavior or browser
 navigation. Browser audio detection depends on the browser's audio sessions.
+
+## waytool service
+
+The upstream user service is static; it has no installation section and should
+be started, not enabled. The installer uses:
+
+```bash
+systemctl --user start waytool.service
+```
+
+If an older installer printed “The unit files have no installation config”
+but then printed “Installation succeeded”, the app files were installed.
+Check the running service with `systemctl --user is-active waytool.service`.
 
 ## Installer and removal
 
