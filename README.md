@@ -1,4 +1,4 @@
-# EG-Clicker 3.0.1
+# EG-Clicker 3.0.2
 
 Browser audio controlled clicker for Fedora 44 KDE Plasma Wayland, with a
 Rust launcher and Python/Tkinter desktop application.
@@ -6,7 +6,7 @@ Rust launcher and Python/Tkinter desktop application.
 ## Install and run with curl
 
 Run this entire block in a terminal on **Fedora 44 KDE Plasma Wayland**, as your
-normal desktop user. It downloads the complete 3.0.1 source, installs dependencies
+normal desktop user. It downloads the complete 3.0.2 source, installs dependencies
 through the Fedora authorization dialog, installs EG-Clicker, and launches it:
 
 ```bash
@@ -15,7 +15,7 @@ through the Fedora authorization dialog, installs EG-Clicker, and launches it:
   EG_INSTALL_DIR="$(mktemp -d)"
   trap 'rm -rf -- "$EG_INSTALL_DIR"' EXIT
   curl --fail --location --show-error --retry 3 \
-    'https://github.com/jmebrohart-maker/EG-Clicker/archive/b269fd1b4079b6fb6853991e6bbdf47404d7875e.tar.gz' \
+    'https://github.com/jmebrohart-maker/EG-Clicker/archive/18f228a94d6415ca2fd48a9f1a93d4fe8217990f.tar.gz' \
     --output "$EG_INSTALL_DIR/eg-clicker.tar.gz"
   tar -xzf "$EG_INSTALL_DIR/eg-clicker.tar.gz" \
     --strip-components=1 -C "$EG_INSTALL_DIR"
@@ -23,7 +23,7 @@ through the Fedora authorization dialog, installs EG-Clicker, and launches it:
 )
 ```
 
-Requires `curl` and `tar`. The download is pinned to the 3.0.1 security-fix implementation
+Requires `curl` and `tar`. The download is pinned to the 3.0.2 repair implementation
 commit from [PR #1](https://github.com/jmebrohart-maker/EG-Clicker/pull/1).
 The repository must be **public** for this command to download without a token.
 Do not run the block with `sudo`; the installer requests authorization when needed.
@@ -34,6 +34,12 @@ After installation, open **EG-Clicker** from the application menu, or run:
 ```bash
 python3 "$HOME/.local/share/eg-clicker/EG-Clicker.py"
 ```
+
+Close any older EG-Clicker window before reinstalling. The repaired window title
+must show **3.0.2**. This version keeps the UI responsive while checking Arm,
+preserves a valid Firefox target when selecting Any Browser, and provides an
+always-visible **Open Logs** button. Arming failures and callback exceptions now
+show an error dialog; callback errors stop automation and open the log window.
 
 ## Start from an extracted download
 
@@ -132,6 +138,7 @@ capture/click actions on Windows. The GUI and settings remain usable there.
 ```bash
 python3 -m unittest discover -s tests -v
 cargo test
+# To include real Tk callback tests on Linux, use a working DISPLAY or Xvfb.
 python3 EG-Clicker.py --diagnose
 ```
 
@@ -163,6 +170,7 @@ Close EG-Clicker, then uninstall from any terminal directory with:
 bash "$HOME/.local/share/eg-clicker/uninstall-fedora.sh"
 ```
 
+The installed script path above works from any current directory.
 Type `REMOVE` when prompted. This removes EG-Clicker files, settings and logs.
 Shared system packages and waytool remain installed. `bash uninstall-fedora.sh`
 only works when your terminal is inside the extracted source folder; curl's
