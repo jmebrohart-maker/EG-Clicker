@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Python GUI, Rust, and installer checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk xvfb xauth shellcheck
+      - name: Python tests including GUI callbacks
+        run: xvfb-run -a /usr/bin/python3 -m unittest discover -s tests -v
+      - name: Rust launcher tests
+        run: cargo test --locked
+      - name: Installer checks
+        run: shellcheck install-fedora.sh uninstall-fedora.sh launch.sh
+      - name: Verify source checksums
+        run: /usr/bin/python3 scripts/verify_manifest.py
