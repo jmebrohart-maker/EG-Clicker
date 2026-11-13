@@ -1,0 +1,4 @@
+# Windows x64 / CPython 3.13 wheels. Install with --require-hashes --only-binary=:all:.
+comtypes==1.5.0 --hash=sha256:c648ed3b243b1eb3b7cb893a873d1b35104ca1c8922061f4b1efafeb255bacb5
+psutil==7.2.2 --hash=sha256:eb7e81434c8d223ec4a219b5fc1c47d0417b12be7ea866e24fb5ad6e84b3d988
+pycaw==20260927 --hash=sha256:d5b162a87536956af8dfa0fc53b1c77870a30706445ffd7f92a2ed184f65ddf4

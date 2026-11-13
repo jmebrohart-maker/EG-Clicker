@@ -1,0 +1,6 @@
+/.venv/
+/.build/
+/dist/
+/wheelhouse/
+__pycache__/
+*.py[cod]
