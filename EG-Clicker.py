@@ -30,7 +30,7 @@ import tkinter as tk
 import webbrowser
 from tkinter import filedialog, scrolledtext
 
-VERSION = '3.0.0'
+VERSION = '3.0.1'
 APP_TITLE = 'EG-Clicker • Ehrhart Group LLC'
 from eg_platform import (IS_WINDOWS, BROWSERS, CONFIG, LEGACY_CONFIG, LOG_FILE,
     run_cmd, pointer_position, parse_screens_json, parse_screens_text, screen_layout,
@@ -41,6 +41,7 @@ DEFAULT_RELIABILITY = {'retries_enabled': False, 'retry_count': 1,
                        'tolerance_px': 4, 'settle_ms': 200}
 MAX_RETRIES = 5
 MAX_TOLERANCE = 12
+from window_guard import capture_window, verify_window
 
 
 NAVY = '#0a1634'
@@ -130,7 +131,7 @@ def _secure_atomic_json(path, record):
             os.unlink(tmp)
 
 
-def save_target_record(point, screens, browser='Firefox'):
+def save_target_record(point, screens, browser='Firefox', window=None):
     _ensure_private_dir(CONFIG.parent)
     try:
         record = read_config(CONFIG)
@@ -139,7 +140,7 @@ def save_target_record(point, screens, browser='Firefox'):
     except (OSError, ValueError, TypeError):
         record = {}
     record.update({'schema': 10, 'x': point[0], 'y': point[1],
-                   'layout': layout_key(screens), 'browser': browser})
+                   'layout': layout_key(screens), 'browser': browser, 'target_window': window})
     _secure_atomic_json(CONFIG, record)
     return record
 
@@ -151,6 +152,7 @@ def save_browser_choice(browser):
     except (OSError, ValueError, TypeError):
         record = {}
     record['browser'] = browser
+    record.pop('target_window', None)
     _secure_atomic_json(CONFIG, record)
 
 
@@ -246,6 +248,7 @@ class App:
         self.armed = False
         self.audio = None
         self.target, self.saved_layout, source = load_target()
+        self.target_window = read_config().get('target_window')
         self.browser = load_browser()
         self.browser_var = tk.StringVar(value=self.browser)
         self.launch_url_var = tk.StringVar(value=read_config().get('launch_url', 'https://www.google.com'))
@@ -643,8 +646,10 @@ class App:
                 self.log('TARGET', f'Captured pointer position={here}; monitor={monitor}; layout={screens}')
                 if not monitor:
                     raise RuntimeError(f'Captured point {here} outside active screen geometry')
-                record = save_target_record(here, screens, self.browser)
+                window = capture_window(self.browser, here)
+                record = save_target_record(here, screens, self.browser, window)
                 self.target, self.saved_layout = here, record['layout']
+                self.target_window = window
                 self.verified = False
                 self.note('TARGET', f'Saved {here} on {monitor}. Ready to ARM; optional tests are under Testing & Troubleshooting.')
             except (OSError, RuntimeError) as exc:
@@ -693,6 +698,8 @@ class App:
         try:
             screens = self.validate_target()
             target = self.target
+            window = self.target_window
+            browser = self.browser
             target_screen = find_screen(*target, screens)
             before = pointer_position()
             before_screen = find_screen(*before, screens)
@@ -727,6 +734,7 @@ class App:
                 self.move_result = 'FAILED'
                 raise RuntimeError(f'Pointer landed at {actual} on {actual_screen}; '
                                    f'expected {target} on {target_screen}, delta={delta}. NO CLICK.')
+            verify_window(window, browser, target, tolerance)
             if not click:
                 self.verified = True
                 self.move_result = 'VERIFIED'
@@ -740,6 +748,9 @@ class App:
                 raise RuntimeError('Pointer changed before click; cancelled')
             if source == 'Audio' and not self.armed:
                 self.log('INFO', 'Disarmed before click; cancelled.')
+                return False
+            verify_window(window, browser, target, tolerance)
+            if source == 'Audio' and not self.armed:
                 return False
             self.log('CLICK', f'Sending click at {target}; pre-click pointer={latest}.')
             click_at(target, trace=self.log)
@@ -792,6 +803,8 @@ class App:
             return
         try:
             self.validate_target()
+            if not isinstance(self.target_window, dict):
+                raise RuntimeError('Save Next again to bind this target to a browser window.')
             if self.audio is None:
                 raise RuntimeError(f'{self.browser} audio is unavailable; check diagnostics.')
         except RuntimeError as exc:
@@ -807,6 +820,7 @@ class App:
             return
         self.armed = False
         self.browser = browser
+        self.target_window = None
         self.audio = None
         self.last_audio_state = 'CHECKING'
         self.last_audio_error = ''

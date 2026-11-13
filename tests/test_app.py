@@ -90,6 +90,11 @@ class CallbackTests(unittest.TestCase):
             self.assertEqual(app.read_config()['launch_url'], 'https://example.com/')
 
 class PointerPolicyTests(unittest.TestCase):
+    def setUp(self):
+        guard = patch.object(app, 'verify_window', return_value=True)
+        self.guard = guard.start()
+        self.addCleanup(guard.stop)
+
     def make_app(self, tolerance):
         import threading
         import queue
@@ -98,6 +103,8 @@ class PointerPolicyTests(unittest.TestCase):
         instance.action_lock = threading.Lock()
         instance.armed = True
         instance.target = (100, 100)
+        instance.target_window = {'id': 'saved-browser'}
+        instance.browser = 'Firefox'
         instance.reliability = dict(app.DEFAULT_RELIABILITY, tolerance_px=tolerance)
         instance.click_count = 0
         instance.events = queue.Queue()
@@ -129,6 +136,22 @@ class PointerPolicyTests(unittest.TestCase):
             self.assertTrue(instance.execute_action(True, 'Audio'))
             click.assert_called_once()
             self.assertEqual(move.call_count, 3)  # two attempts, then restore
+
+    def test_covered_window_blocks_click_and_disarms(self):
+        instance = self.make_app(2)
+        self.guard.side_effect = RuntimeError('Browser covered')
+        with patch.object(app, 'pointer_position', side_effect=[(10,10), (100,100)]), patch.object(app, 'move_to'), patch.object(app, 'click_at') as click, patch.object(app.time, 'sleep'):
+            self.assertFalse(instance.execute_action(True, 'Audio'))
+            click.assert_not_called()
+            self.assertFalse(instance.armed)
+
+    def test_window_change_at_final_check_blocks_click(self):
+        instance = self.make_app(2)
+        self.guard.side_effect = [True, RuntimeError('Browser changed')]
+        with patch.object(app, 'pointer_position', side_effect=[(10,10), (100,100), (100,100)]), patch.object(app, 'move_to'), patch.object(app, 'click_at') as click, patch.object(app.time, 'sleep'):
+            self.assertFalse(instance.execute_action(True, 'Audio'))
+            click.assert_not_called()
+            self.assertFalse(instance.armed)
 
 if __name__ == '__main__':
     unittest.main()
