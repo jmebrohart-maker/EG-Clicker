@@ -20,7 +20,7 @@ prompted, and any waytool input/screen-sharing consent dialog.
   EG_INSTALL_DIR="$(mktemp -d)"
   trap 'rm -rf -- "$EG_INSTALL_DIR"' EXIT
   curl --fail --location --show-error --retry 3 \
-    'https://github.com/jmebrohart-maker/EG-Clicker/archive/refs/heads/codex/rust-python-settings-launch.tar.gz' \
+    'https://github.com/jmebrohart-maker/EG-Clicker/archive/9dd4d029399668483be48ea9b00da9a0651e7e4f.tar.gz' \
     --output "$EG_INSTALL_DIR/eg-clicker.tar.gz"
   tar -xzf "$EG_INSTALL_DIR/eg-clicker.tar.gz" \
     --strip-components=1 -C "$EG_INSTALL_DIR"
@@ -28,7 +28,7 @@ prompted, and any waytool input/screen-sharing consent dialog.
 )
 ```
 
-Requires `curl` and `tar`. The repository is public; no GitHub login is needed.
+The download is pinned to the 3.1.0 implementation commit. Requires `curl` and `tar`. The repository is public; no GitHub login is needed.
 The installer installs Fedora dependencies, adds the app to your menu and starts
 it. Confirm **3.1.0** in the app header. Rust is optional for this installation.
 
