@@ -1,12 +1,12 @@
 {
   ".gitignore": "43d7c9ca626d1cffb18a858e2e9afde634a8f17e789705deee5c473be66d02b1",
-  "Cargo.lock": "a2e84d0f83cc1ad692b56ee7d42bccbb5b7f5a75bccb88cdb4600d336dc64d3f",
-  "Cargo.toml": "6b612f0cda0a4560b24efe5d5d6fc48cf35d1e05506634e61234b8e3e003e17f",
-  "EG-Clicker.py": "eca9707702e5ca6ef4a893445f4cea93c47c38a08afdfd084fc930c65d33d989",
+  "Cargo.lock": "5a46879c225991b821e9cd09003e2156ddb1009dbb1c03486b0b4215b3b4103e",
+  "Cargo.toml": "732498a690bb9b9ba00c501e6104a38723f6794ce1ff9d50b22efdf3dbebf299",
+  "EG-Clicker.py": "e7f559cd58fb045a3728a7c1bb914fad3d780b8756c82c85374b56e1135ee895",
   "Install EG-Clicker.desktop": "fcef7dca44c7ae9af15a3130ead88d3712baa3ccc4a58454ba9397dcc29e5462",
   "LICENSE": "380520c734051ad016cfc112014b6b9fdf1a2de9b6a0672744ef9c53c8cd0cd9",
-  "README.md": "af3b1b5317ffcffd4c49d5aa0a4927896f3b831bb111db0d87fb5b6dec4211bf",
-  "README.txt": "af3b1b5317ffcffd4c49d5aa0a4927896f3b831bb111db0d87fb5b6dec4211bf",
+  "README.md": "4d076a5a9bf9d5799dfd6fd7d272a2454eae61e5d74a0b2176173e922fc27d84",
+  "README.txt": "4d076a5a9bf9d5799dfd6fd7d272a2454eae61e5d74a0b2176173e922fc27d84",
   "eg_logo_icon.png": "f9fb61c2828233e6c0e83609f68685ba90d3c02ed2a2ba233022f50357f4b3fa",
   "eg_platform.py": "4b52fe586f0c535a0aeb5461a87c73be230e4828d9a93d4072fb819b0c5eb2ac",
   "install-fedora.sh": "9b555cc92a737971d9ba959ed81d26f6636c16b962fb2358b0cf1c1de139f059",
@@ -16,8 +16,9 @@
   "provenance/waytool-1.0.1-aarch64.sigstore.json": "e27dda01bfe95e99fb0f7f986a5825ae9dd5e432a3902db8da485e4435548b6b",
   "provenance/waytool-1.0.1-x86_64.sigstore.json": "e27dda01bfe95e99fb0f7f986a5825ae9dd5e432a3902db8da485e4435548b6b",
   "src/main.rs": "db1c78c6810d7baa07813704e5638846f560c1b93046650d3c3918ec227ef568",
-  "tests/test_app.py": "30005c7dfdde07cabc7e0d4363caa502044e0ea68d36e2dcc1e6bb7784da225e",
-  "tests/test_security.py": "0b53758216cff188c65011af09fc437c813878273df5c9df5c226f9b3371c1e2",
+  "tests/test_app.py": "b6e35fffa67fca52d435cdc71601c3d08743c60214f0a44dd08e9cec4217d0d9",
+  "tests/test_gui.py": "6fa631346dc75b4f03f99f2d27a58e3c665381c9aea2ca92156c2f389a02d72b",
+  "tests/test_security.py": "8bc913eb24622ed48aa00e17c45a57ac50857451d717f278dcd651161dd1e3fb",
   "uninstall-fedora.sh": "523443bf40cee8331e6a55db37af02f95389d3bf19106733d052a68303b2ff84",
-  "window_guard.py": "600fcd4865b602bcf07fd77727cb64c6f734f075024e3daf7f4f71024ad0ef89"
+  "window_guard.py": "37ff4f9a1427b908bd63055c2e1fe7e4f2d170541d61e4a2c4f2f344e5283b5a"
 }

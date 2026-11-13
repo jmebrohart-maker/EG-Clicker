@@ -25,6 +25,11 @@ class WindowGuardTests(unittest.TestCase):
             if target=='process_identity':self.process=value
         self.saved=guard.capture_window('Firefox',(100,100))
 
+    def test_any_browser_preserves_compatible_binding(self):
+        self.assertTrue(guard.matches_saved_browser(self.saved, 'Any Browser'))
+        self.assertTrue(guard.matches_saved_browser(self.saved, 'Firefox'))
+        self.assertFalse(guard.matches_saved_browser(self.saved, 'Chrome'))
+
     def test_same_window_accepted(self):
         self.assertTrue(guard.verify_window(self.saved,'Firefox',(100,100),0))
 

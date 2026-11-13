@@ -74,3 +74,11 @@ def verify_window(saved, browser, point, tolerance):
     if max(abs(current['pointer'][i] - point[i]) for i in (0, 1)) > tolerance:
         raise RuntimeError('Pointer changed during window verification. No click was sent.')
     return True
+
+
+def matches_saved_browser(saved, browser):
+    """Changing to Any Browser must not silently discard a valid Firefox target."""
+    return (isinstance(saved, dict) and isinstance(saved.get('image'), str)
+            and isinstance(saved.get('class'), str)
+            and _matches(saved['image'], browser, 'linux')
+            and _matches(saved['class'], browser, 'linux'))

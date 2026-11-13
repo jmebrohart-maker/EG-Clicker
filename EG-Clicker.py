@@ -28,9 +28,9 @@ import threading
 import time
 import tkinter as tk
 import webbrowser
-from tkinter import filedialog, scrolledtext
+from tkinter import filedialog, scrolledtext, messagebox
 
-VERSION = '3.0.1'
+VERSION = '3.0.2'
 APP_TITLE = 'EG-Clicker • Ehrhart Group LLC'
 from eg_platform import (IS_WINDOWS, BROWSERS, CONFIG, LEGACY_CONFIG, LOG_FILE,
     run_cmd, pointer_position, parse_screens_json, parse_screens_text, screen_layout,
@@ -41,7 +41,7 @@ DEFAULT_RELIABILITY = {'retries_enabled': False, 'retry_count': 1,
                        'tolerance_px': 4, 'settle_ms': 200}
 MAX_RETRIES = 5
 MAX_TOLERANCE = 12
-from window_guard import capture_window, verify_window
+from window_guard import capture_window, verify_window, matches_saved_browser
 
 
 NAVY = '#0a1634'
@@ -152,7 +152,8 @@ def save_browser_choice(browser):
     except (OSError, ValueError, TypeError):
         record = {}
     record['browser'] = browser
-    record.pop('target_window', None)
+    if not matches_saved_browser(record.get('target_window'), browser):
+        record.pop('target_window', None)
     _secure_atomic_json(CONFIG, record)
 
 
@@ -246,6 +247,10 @@ class App:
         self.root = root
         self.running = True
         self.armed = False
+        self.arming = False
+        self.arm_generation = 0
+        self.log_window = None
+        self.last_callback_error = None
         self.audio = None
         self.target, self.saved_layout, source = load_target()
         self.target_window = read_config().get('target_window')
@@ -270,12 +275,13 @@ class App:
         self.note_bad = False
         self.move_result = 'UNTESTED'
 
-        root.title(APP_TITLE)
+        root.title(f'{APP_TITLE} • {VERSION}')
         root.geometry('910x530')
         root.minsize(740, 445)
         root.configure(bg=NAVY)
 
         self.build_ui()
+        root.report_callback_exception = self.callback_error
         self.log('INFO', f'EG-Clicker {VERSION} started. OS={os.name}; browser={self.browser}.')
         self.log('INFO', f'session={os.environ.get("XDG_SESSION_TYPE", "unset")} '
                  f'uid={os.getuid() if hasattr(os, "getuid") else "Windows"} DISPLAY={os.environ.get("DISPLAY", "unset")} '
@@ -344,6 +350,8 @@ class App:
         tk.Label(launch, text='Website', bg=NAVY2, fg=WHITE).pack(side='left')
         tk.Entry(launch, textvariable=self.launch_url_var, bg=PANEL2, fg=WHITE,
                  insertbackground=WHITE).pack(side='left', fill='x', expand=True, padx=10)
+        tk.Button(launch, text='Open Logs', command=self.show_logs,
+                  bg=PANEL2, fg=WHITE, padx=10).pack(side='right', padx=(5, 0))
         tk.Button(launch, text='Launch Browser', command=self.launch_browser,
                   bg=BLUE, fg=WHITE, padx=12).pack(side='right')
 
@@ -366,6 +374,8 @@ class App:
                                relief=tk.FLAT, bd=0, font=('Sans', 10, 'bold'),
                                padx=10, pady=9, cursor='hand2')
             button.grid(row=1, column=i, padx=5, pady=5, sticky='ew')
+            if i == 1:
+                self.arm_button = button
             if i == 2:
                 self.testing_button = button
 
@@ -537,6 +547,7 @@ class App:
             self.note('ERROR', f'Could not save pointer settings: {exc}')
             return False
         self.armed = False
+        self.cancel_arming()
         self.reliability = updated
         self.retry_count_var.set(str(updated['retry_count']))
         self.tolerance_var.set(str(updated['tolerance_px']))
@@ -630,6 +641,7 @@ class App:
         threading.Thread(target=self.snapshot_diagnostics, name='EG-Diagnose', daemon=True).start()
 
     def save_delayed(self):
+        self.cancel_arming()
         self.armed = False
         self.verified = False
         self.move_result = 'UNTESTED'
@@ -796,31 +808,60 @@ class App:
         finally:
             self.action_lock.release()
 
+    def cancel_arming(self):
+        self.arming = False
+        self.arm_generation = getattr(self, 'arm_generation', 0) + 1
+
     def toggle_arm(self):
-        if self.armed:
+        if self.armed or self.arming:
             self.armed = False
+            self.cancel_arming()
             self.note('INFO', 'DISARMED. Automatic clicking paused.')
             return
-        try:
-            self.validate_target()
-            if not isinstance(self.target_window, dict):
-                raise RuntimeError('Save Next again to bind this target to a browser window.')
-            if self.audio is None:
-                raise RuntimeError(f'{self.browser} audio is unavailable; check diagnostics.')
-        except RuntimeError as exc:
-            self.note('WARN', 'Cannot arm: ' + str(exc))
+        self.arming = True
+        self.arm_generation += 1
+        generation = self.arm_generation
+        browser, target, window = self.browser, self.target, self.target_window
+        self.note('INFO', 'Checking target and audio. Press Cancel Arm to cancel.')
+        def worker():
+            error = None
+            try:
+                self.validate_target()
+                if not isinstance(window, dict):
+                    raise RuntimeError('The last capture did not save a browser identity. Select the browser, then use Save Next again. Open Logs for capture errors.')
+                if self.audio is None:
+                    playing, failure = browser_audio_state(browser)
+                    if playing is None:
+                        raise RuntimeError(f'{browser} audio is unavailable: {failure or self.last_audio_error or "no audio response"}')
+            except Exception as exc:
+                error = str(exc)
+            self.events.put(('arm_result', (generation, browser, target, window, error)))
+        threading.Thread(target=worker, name='EG-ArmCheck', daemon=True).start()
+
+    def finish_arming(self, result):
+        generation, browser, target, window, error = result
+        if not self.arming or generation != self.arm_generation:
+            return
+        self.arming = False
+        if browser != self.browser or target != self.target or window != self.target_window:
+            error = 'Target or browser changed during checks. Press Arm again.'
+        if error:
+            self.armed = False
+            self.note('ERROR', 'Cannot arm: ' + error)
+            messagebox.showerror('Cannot arm EG-Clicker', error, parent=self.root)
             return
         self.armed = True
         self.note('INFO', f'ARMED. Monitoring {self.browser} for audio stop; target={self.target}.')
-        self.note('INFO', 'Window minimizes to avoid covering the Next button. Restore via taskbar to copy logs.')
         self.root.after(450, lambda: self.root.iconify() if self.armed else None)
 
     def change_browser(self, browser):
         if browser not in BROWSERS or browser == self.browser:
             return
         self.armed = False
+        self.cancel_arming()
         self.browser = browser
-        self.target_window = None
+        if not matches_saved_browser(self.target_window, browser):
+            self.target_window = None
         self.audio = None
         self.last_audio_state = 'CHECKING'
         self.last_audio_error = ''
@@ -828,7 +869,8 @@ class App:
             save_browser_choice(browser)
         except OSError as exc:
             self.note('WARN', 'Unable to save browser selection: ' + str(exc))
-        self.note('INFO', f'Browser changed to {browser}; clicker DISARMED. Re-arm to monitor.')
+        instruction = 'Re-arm to monitor.' if self.target_window else 'Save Next again before arming.'
+        self.note('INFO', f'Browser changed to {browser}; clicker DISARMED. {instruction}')
         if IS_WINDOWS:
             self.log('WARN', 'Windows audio: selected-browser active session AND default-output peak; other applications may affect peak detection.')
 
@@ -871,6 +913,46 @@ class App:
         finally:
             close_audio_thread()
 
+    def show_logs(self):
+        if self.log_window is not None and self.log_window.winfo_exists():
+            self.log_window.deiconify()
+            self.log_window.lift()
+            return
+        window = tk.Toplevel(self.root)
+        self.log_window = window
+        window.title('EG-Clicker Logs')
+        window.geometry('850x500')
+        tk.Label(window, text='Saved log: ' + str(self.filelog.path), anchor='w').pack(fill='x', padx=8, pady=6)
+        self.log_viewer = scrolledtext.ScrolledText(window, wrap='word', font=('DejaVu Sans Mono', 9))
+        self.log_viewer.pack(fill='both', expand=True, padx=8)
+        bar = tk.Frame(window)
+        bar.pack(fill='x', padx=8, pady=8)
+        tk.Button(bar, text='Copy All Logs', command=self.copy_logs).pack(side='left')
+        tk.Button(bar, text='Save Log As…', command=self.save_logs_as).pack(side='left', padx=8)
+        self.update_log_window()
+
+    def update_log_window(self):
+        if self.log_window is not None and self.log_window.winfo_exists():
+            self.log_viewer.configure(state='normal')
+            self.log_viewer.delete('1.0', 'end')
+            self.log_viewer.insert('end', '\n'.join(self.history))
+            self.log_viewer.see('end')
+            self.log_viewer.configure(state='disabled')
+
+    def callback_error(self, exception_type, value, tb):
+        import traceback
+        self.armed = False
+        self.cancel_arming()
+        details = ''.join(traceback.format_exception(exception_type, value, tb))
+        if details == self.last_callback_error:
+            return
+        self.last_callback_error = details
+        self.log('ERROR', 'GUI callback failed: ' + details)
+        self.note_message = 'An interface error stopped automation. Open Logs for details.'
+        self.note_bad = True
+        self.show_logs()
+        messagebox.showerror('EG-Clicker interface error', str(value) + '\nAutomation stopped. Details are in Open Logs.', parent=self.root)
+
     def copy_logs(self):
         lines = '\n'.join(self.history) + '\n'
         try:
@@ -901,13 +983,24 @@ class App:
         self.note('INFO', 'Visible log cleared; automatic disk log retained.')
 
     def refresh(self):
+        try:
+            self.refresh_once()
+        except Exception:
+            self.callback_error(*sys.exc_info())
+        finally:
+            if self.running:
+                self.root.after(150, self.refresh)
+
+    def refresh_once(self):
         pending_logs = []
         while True:
             try:
                 kind, val = self.events.get_nowait()
             except queue.Empty:
                 break
-            if kind == 'log':
+            if kind == 'arm_result':
+                self.finish_arming(val)
+            elif kind == 'log':
                 for line in val.split('\n'):
                     self.history.append(line)
                     pending_logs.append(line)
@@ -932,6 +1025,9 @@ class App:
                 self.log_text.delete('1.0', f'{rowcount-1500}.0')
             self.log_text.see('end')
             self.log_text.configure(state='disabled')
+        if pending_logs:
+            self.update_log_window()
+        self.arm_button.configure(text='Cancel Arm' if self.arming else 'Arm / Disarm')
         self.note_label.configure(text=self.note_message, fg=RED if self.note_bad else MUTED)
         self.target_label.configure(text=(f'{self.target[0]}, {self.target[1]}' if self.target else 'NOT SAVED'),
                                     fg=GREEN if self.verified else YELLOW)
@@ -942,10 +1038,9 @@ class App:
                                        ('DISARMED  •  TARGET READY' if self.target else 'DISARMED  •  SAVE A TARGET')),
                                  fg=GREEN if self.armed else (YELLOW if self.target else RED))
         self.count_label.configure(text=f'Click commands sent: {self.click_count}  |  Move: {self.move_result}')
-        if self.running:
-            self.root.after(150, self.refresh)
 
     def close(self):
+        self.cancel_arming()
         self.armed = False
         self.running = False
         self.log('INFO', 'EG-Clicker closed.')

@@ -157,7 +157,15 @@ scripts. See [provenance details](provenance/README.md).
 The launcher loads only its sibling Python app and rejects script symlinks.
 Browser launch uses protected system paths instead of user PATH entries.
 
-Run `bash uninstall-fedora.sh` to remove EG-Clicker files, settings and logs;
-type `REMOVE` when prompted. Shared system packages and waytool remain installed.
+Close EG-Clicker, then uninstall from any terminal directory with:
+
+```bash
+bash "$HOME/.local/share/eg-clicker/uninstall-fedora.sh"
+```
+
+Type `REMOVE` when prompted. This removes EG-Clicker files, settings and logs.
+Shared system packages and waytool remain installed. `bash uninstall-fedora.sh`
+only works when your terminal is inside the extracted source folder; curl's
+installation staging folder is automatically deleted after installation.
 
 Licensed under the [MIT License](LICENSE).

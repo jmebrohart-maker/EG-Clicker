@@ -25,6 +25,15 @@ class SettingsTests(unittest.TestCase):
             app.save_browser_choice('Chrome')
             self.assertEqual(app.load_browser(), 'Chrome')
 
+    def test_changing_to_any_browser_preserves_saved_window(self):
+        with tempfile.TemporaryDirectory() as d, patch.object(app, 'CONFIG', Path(d)/'config.json'):
+            window={'id':'browser', 'image':'firefox', 'class':'firefox'}
+            app._secure_atomic_json(app.CONFIG, {'browser':'Firefox', 'target_window':window})
+            app.save_browser_choice('Any Browser')
+            self.assertEqual(app.read_config()['target_window'],window)
+            app.save_browser_choice('Chrome')
+            self.assertNotIn('target_window',app.read_config())
+
     def test_malformed_roots_recover(self):
         with tempfile.TemporaryDirectory() as d, patch.object(app, 'CONFIG', Path(d)/'config.json'):
             for raw in ('[]', 'null', '5', 'invalid'):
