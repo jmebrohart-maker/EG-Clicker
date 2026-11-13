@@ -80,8 +80,9 @@ Categories=Utility;Accessibility;
 StartupNotify=true
 EOF
 
+# Upstream waytool.service is static: start it; do not attempt to enable it.
 systemctl --user daemon-reload
-systemctl --user enable --now waytool.service || fail 'Could not start waytool user service. Check systemctl --user status waytool.service.'
+systemctl --user start waytool.service || fail 'Could not start waytool user service. Check systemctl --user status waytool.service.'
 
 echo
 printf 'Installation succeeded.\nLaunching EG-Clicker…\n'
