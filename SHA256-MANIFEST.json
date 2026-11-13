@@ -6,7 +6,7 @@
   ".github/ISSUE_TEMPLATE/feature_request.yml": "813ad63af4327d3edce0fab823aa32ab2bd6725c957777b19efe6e9ae3528624",
   ".github/dependabot.yml": "a7c09a87e843df2ffed0a27b0f30af6238f0232722c9a5680b70be5624d35c49",
   ".github/pull_request_template.md": "11f6f4481a447b0184380a95d40e3cf7253a980df6bcc2da9f741e8a88706ba5",
-  ".github/workflows/ci.yml": "90ddc5c948eddcc85227bf5fc3add080c9be2fc043bc7b7650384cb3c30061e6",
+  ".github/workflows/ci.yml": "6cfb900601cad61ceaa3283ca021696d93a91adbe5a10f0c068c75b9e6444cce",
   ".gitignore": "b07ff493cf436f6d339db4a86b07435acae4f07757974caeb92871fe60f96803",
   "CHANGELOG.md": "6785ba2aa4138aa5a578b913b72c5073dc478ef7c21f679e844c8cd1ca75a3ac",
   "CONTRIBUTING.md": "23f2401d81eba9fbe70491eb2ac78d187bc12fd60aec44ea4aee3583783545cc",
@@ -37,6 +37,6 @@
   "tests/test_coordinates.py": "08c7729c67240dc4887f6250e895220ed3c0c2e231b2ca55e1f55b4d7d53698e",
   "tests/test_gui.py": "98dcaf642c34c6843b3dc70b135461e481f4300bba6fd9d8ee33f636f733504c",
   "tests/test_security.py": "1fa992b70773b7dcbc1210f91ea55320346344c8067030da2ddb1571f9bf5433",
-  "uninstall-fedora.sh": "523443bf40cee8331e6a55db37af02f95389d3bf19106733d052a68303b2ff84",
+  "uninstall-fedora.sh": "ab0f5f809e48239048d5dc335efb4711b90e3f61def34a119f9286812c034c89",
   "window_guard.py": "cc8a5797052ae1933a360606274296a585df83d9687e7dc11a1539753c5f46de"
 }

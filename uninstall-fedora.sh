@@ -21,5 +21,7 @@ remove_tree "$HOME/.local/share/eg-clicker"
 remove_tree "$HOME/.config/eg-clicker"
 remove_tree "${XDG_STATE_HOME:-$HOME/.local/state}/eg-clicker"
 # Leave older 'razer-audio-clicker.json' untouched: it predated EG-Clicker.
-command -v update-desktop-database >/dev/null && update-desktop-database "$HOME/.local/share/applications" >/dev/null 2>&1 || true
+if command -v update-desktop-database >/dev/null; then
+  update-desktop-database "$HOME/.local/share/applications" >/dev/null 2>&1 || true
+fi
 printf 'EG-Clicker files, settings and logs removed. Shared packages left installed.\n'
