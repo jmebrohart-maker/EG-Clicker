@@ -64,6 +64,7 @@ class CallbackTests(unittest.TestCase):
         instance = app.App.__new__(app.App)
         instance.armed = True
         instance.reliability = dict(app.DEFAULT_RELIABILITY)
+        instance.require_window_var = Mock(get=lambda: False)
         instance.retry_enabled_var = Mock(get=lambda: True)
         instance.retry_count_var = Mock(get=lambda: '3')
         instance.tolerance_var = Mock(get=lambda: '2')
@@ -114,7 +115,7 @@ class PointerPolicyTests(unittest.TestCase):
         instance.target = (100, 100)
         instance.target_window = {'id': 'saved-browser'}
         instance.browser = 'Firefox'
-        instance.reliability = dict(app.DEFAULT_RELIABILITY, tolerance_px=tolerance)
+        instance.reliability = dict(app.DEFAULT_RELIABILITY, tolerance_px=tolerance, require_browser_window=True)
         instance.click_count = 0
         instance.events = queue.Queue()
         instance.log = Mock()
@@ -146,6 +147,17 @@ class PointerPolicyTests(unittest.TestCase):
             click.assert_called_once()
             self.assertEqual(move.call_count, 3)  # two attempts, then restore
 
+    def test_anywhere_mode_skips_browser_window_checks(self):
+        instance = self.make_app(2)
+        instance.reliability['require_browser_window'] = False
+        instance.target_window = None
+        self.guard.side_effect = RuntimeError('Another app is active')
+        positions = [(10,10), (100,100), (100,100), (100,100), (10,10)]
+        with patch.object(app, 'pointer_position', side_effect=positions), patch.object(app, 'move_to'), patch.object(app, 'click_at') as click, patch.object(app.time, 'sleep'):
+            self.assertTrue(instance.execute_action(True, 'Audio'))
+            self.guard.assert_not_called()
+            click.assert_called_once()
+
     def test_covered_window_blocks_click_and_disarms(self):
         instance = self.make_app(2)
         self.guard.side_effect = RuntimeError('Browser covered')
@@ -161,6 +173,28 @@ class PointerPolicyTests(unittest.TestCase):
             self.assertFalse(instance.execute_action(True, 'Audio'))
             click.assert_not_called()
             self.assertFalse(instance.armed)
+
+class LogPersistenceTests(unittest.TestCase):
+    def test_recent_log_entries_survive_reopening(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp)/'eg-clicker.log'
+            first = app.LogWriter(path)
+            first.write('INFO', 'Previous session message')
+            second = app.LogWriter(path)
+            self.assertIn('Previous session message', second.tail())
+
+    def test_tail_is_bounded_and_rejects_symlinks(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp)/'eg-clicker.log'
+            writer = app.LogWriter(path)
+            for i in range(8):writer.write('INFO',f'entry {i}')
+            self.assertEqual(len(writer.tail(limit=3).splitlines()),3)
+            self.assertIn('entry 7',writer.tail(limit=3))
+            if app.IS_WINDOWS:return
+            path.unlink()
+            secret=Path(temp)/'other.txt';secret.write_text('unrelated file')
+            path.symlink_to(secret)
+            self.assertNotIn('unrelated file',writer.tail())
 
 if __name__ == '__main__':
     unittest.main()

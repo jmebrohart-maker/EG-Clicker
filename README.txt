@@ -1,13 +1,18 @@
-# EG-Clicker 3.0.3
+# EG-Clicker 3.1.0
 
-Browser audio controlled clicker for Fedora 44 KDE Plasma Wayland, with a
-Rust launcher and Python/Tkinter desktop application.
+An audio controlled desktop clicker by **Ehrhart Group LLC**. Rust starts the
+application; Python/Tk handles the interface, settings, audio and pointer control.
+The interface uses standard Tk/ttk, with no extra GUI package to install.
+
+![EG-Clicker interface](docs/interface.png)
+
+*Interface preview with sample activity.*
 
 ## Install and run with curl
 
-Run this entire block in a terminal on **Fedora 44 KDE Plasma Wayland**, as your
-normal desktop user. It downloads the complete 3.0.3 source, installs dependencies
-through the Fedora authorization dialog, installs EG-Clicker, and launches it:
+Close any older EG-Clicker window, then run this entire block as your normal user
+on **Fedora 44 KDE Plasma Wayland**. Approve Fedora's package authorization when
+prompted, and any waytool input/screen-sharing consent dialog.
 
 ```bash
 (
@@ -15,7 +20,7 @@ through the Fedora authorization dialog, installs EG-Clicker, and launches it:
   EG_INSTALL_DIR="$(mktemp -d)"
   trap 'rm -rf -- "$EG_INSTALL_DIR"' EXIT
   curl --fail --location --show-error --retry 3 \
-    'https://github.com/jmebrohart-maker/EG-Clicker/archive/90468a9a9e5f504e3cf18f9115c21aee93e3660c.tar.gz' \
+    'https://github.com/jmebrohart-maker/EG-Clicker/archive/refs/heads/codex/rust-python-settings-launch.tar.gz' \
     --output "$EG_INSTALL_DIR/eg-clicker.tar.gz"
   tar -xzf "$EG_INSTALL_DIR/eg-clicker.tar.gz" \
     --strip-components=1 -C "$EG_INSTALL_DIR"
@@ -23,112 +28,88 @@ through the Fedora authorization dialog, installs EG-Clicker, and launches it:
 )
 ```
 
-Requires `curl` and `tar`. The download is pinned to the 3.0.3 repair implementation
-commit from [PR #1](https://github.com/jmebrohart-maker/EG-Clicker/pull/1).
-The repository must be **public** for this command to download without a token.
-Do not run the block with `sudo`; the installer requests authorization when needed.
-Rust is optional and is not required for this installation.
+Requires `curl` and `tar`. The repository is public; no GitHub login is needed.
+The installer installs Fedora dependencies, adds the app to your menu and starts
+it. Confirm **3.1.0** in the app header. Rust is optional for this installation.
 
-After installation, open **EG-Clicker** from the application menu, or run:
+After installation, launch **EG-Clicker** from the menu or run:
 
 ```bash
 python3 "$HOME/.local/share/eg-clicker/EG-Clicker.py"
 ```
 
-Close any older EG-Clicker window before reinstalling. The repaired window title
-must show **3.0.3**. This version keeps the UI responsive while checking Arm,
-preserves a valid Firefox target when selecting Any Browser, and provides an
-always-visible **Open Logs** button. Arming failures and callback exceptions now
-show an error dialog; callback errors stop automation and open the log window.
-
-Version 3.0.3 reads live logical monitor coordinates from waytool instead of
-using a potentially shifted KScreen configuration origin. Existing saved
-layouts may need capturing again. Firefox's Wayland app ID (such as
-`org.mozilla.firefox`) is not treated as a process name: the protected browser
-executable is verified, and the exact captured window class remains bound to
-the target. Capture errors report the detected executable/class when they do
-not match the chosen browser.
-
-After upgrading, select the browser, capture Next again, then arm. Keep the
-browser active and uncovered. A failed capture invalidates the current window
-binding rather than allowing an older target to appear ready.
-
-## Start from an extracted download
-
-Extract or clone the whole repository. On Fedora 44 KDE Wayland, run:
-
-```bash
-bash install-fedora.sh
-```
-
-The installer requests administrator authorization for Fedora dependencies,
-installs the application for the current user, and adds **EG-Clicker** to the
-application menu. It does not run the GUI as root.
-
-With dependencies already installed:
+From an extracted source folder with dependencies already installed:
 
 ```bash
 bash launch.sh
-# Or start Python directly:
-python3 EG-Clicker.py
 ```
 
-Required Linux dependencies are Python 3, Tkinter, `pactl`, `kdotool`,
-`kscreen-doctor`, and `waytool` with its user service running. The installer
-currently targets Fedora **44**. Fedora 45 is not validated.
+## Click anywhere, or restrict it in Settings
 
-## Launch, settings, and automation
+**Anywhere on desktop is the default.** The selected browser is the audio source,
+not a requirement for where the click lands. You can capture any location on an
+active display and use other applications while that browser's audio is monitored.
+When audio stops for two seconds, the saved location receives the click, including
+whatever application is at that point.
 
-1. Choose your browser, enter a complete `https://` or `http://` website URL,
-   and press **Launch Browser**. The URL is saved for the next session.
-   The selected browser must be installed; **Any Browser** uses your default.
-2. Press **Save Next (4s)** and move the pointer onto the website's Next button
-   before capture. The app minimizes while capturing the position.
-3. Expand **Pointer Reliability Settings**, choose your values, and press
-   **Save Settings**. **Restore Safe Defaults** also saves the defaults.
-4. Press **Arm / Disarm** to begin monitoring. After detected browser audio
-   stops for two seconds, the app verifies the saved pointer position and
-   sends a click. Press it again to stop.
+1. Select the browser to monitor. Optionally enter a website and press **Launch**.
+2. Press **Save Next · 4s**, then place your pointer at the desired click location.
+3. Press **Arm clicker**. **Disarm clicker** pauses automation.
 
-**Launch Browser** opens the website. **Arm / Disarm** controls automatic
-clicking. Saving settings or changing browsers disarms automation; re-arm
-when ready. Optional pointer tests and diagnostic logs are under
-**Testing & Troubleshooting**.
+For browser-only behavior, open **Settings**, check **Require the captured browser
+window**, and press **Save settings**. Capture the target again on that browser.
+This optional mode requires the same browser window to remain active, uncovered,
+and at the same position/size. It disarms on a mismatch. Leave the option unchecked
+for unrestricted desktop coordinates. The main control panel shows the saved mode.
 
-Settings persist in `~/.config/eg-clicker/config.json` on Linux, including the
-browser, URL, target/display layout, captured window identity, retries, tolerance
-and settle delay.
-Defaults: retries disabled, one extra retry when enabled, 4px tolerance,
-200ms settle delay. Pointer mismatches cancel the click and disarm the app.
-Monitor arrangement changes require capturing the target again.
+![Clicker settings](docs/settings.png)
 
-### Testing the security fixes
+Settings also control retries, tolerance and settling delay. **Save settings**
+persists changes and pauses monitoring. **Restore defaults** saves Anywhere mode,
+retries disabled, 4px tolerance, and 200ms settling delay. Browser selection, launch
+URL and target are preserved in `~/.config/eg-clicker/config.json` on Linux.
 
-After upgrading, **capture the target again with Save Next**. Old targets have
-no window identity and cannot be armed. Keep the selected browser active and
-uncovered. Closing/reopening, moving, or resizing it requires another capture.
-The supported click backend in this hardened release is Fedora 44 KDE Wayland
-with a native, protected system browser installation. Flatpak/portable browser
-identity may not be verifiable; in that case the app refuses to click.
+Pointer position is verified in both modes. Monitor changes require recapturing
+the target. Live waytool monitor coordinates are used instead of a potentially
+shifted KScreen configuration origin. Browser-only mode verifies the protected
+process and captured window identity; a Wayland app ID is not treated as a process
+name. The window check and input command are separate OS operations.
 
-1. Launch the browser and capture Next. Optionally use Move Only first.
-2. Start browser audio, arm the app, and let playback stop. With the browser
-   active and unchanged, the normal delayed click should work.
-3. Repeat, but switch to another app or cover the target before audio stops.
-   The click must be cancelled and the clicker must disarm.
-4. Move/resize or close the browser and repeat. The click must be cancelled;
-   capture again before resuming.
+## Activity and logs
 
-Window identity, process identity, geometry, focus, and the topmost window at
-the pointer are checked immediately before input. These checks reduce wrong
-window clicks, but a desktop change can still race the separate input command;
-this is not an atomic OS-level guarantee.
+**Activity stays visible beside the controls**, including on smaller windows.
+It shows compact times and colored errors; **Copy** and **Export** retain full
+original entries. **Open Logs** opens a larger, independent log window.
 
-## Build the Rust launcher
+Recent entries are restored on restart (up to 300 lines, with bounded reads).
+Disk logs remain at `~/.local/state/eg-clicker/eg-clicker.log`, or under your
+`XDG_STATE_HOME` if set. Oversized logs rotate to `eg-clicker.previous.log` at
+startup. GUI callback errors stop automation and open copyable diagnostics.
 
-This is a hybrid application: Rust locates and starts the Python GUI, forwards
-arguments, and returns its exit status. Python handles settings, browser launch,
-audio monitoring and pointer integration. No compiled binary is tracked here.
+Optional **Pointer tests** offer Move only, Test click, and Check setup.
+
+## Dependencies and service
+
+Linux needs Python 3/Tkinter, `pactl`, `kdotool`, `kscreen-doctor`, and waytool.
+The installer currently targets Fedora **44**; Fedora 45 is not validated.
+
+waytool's upstream unit is static: start it rather than enabling it.
+
+```bash
+systemctl --user start waytool.service
+systemctl --user is-active waytool.service
+```
+
+The second command should report `active`. An older installer's “no installation
+config” warning did not mean app-file installation failed.
+
+Downloaded waytool 1.0.1 RPMs must match source-pinned checksums and bundled
+Sigstore attestations verified by Fedora's `gh` package. Repository, workflow,
+source commit and hosted runner identity are enforced before privileged RPM
+installation. Verification needs HTTPS access to trust metadata, but no login.
+Existing system-installed waytool is reused. See [provenance details](provenance/README.md).
+
+## Build and verify
 
 ```bash
 cargo build --release
@@ -136,69 +117,33 @@ cp target/release/eg-clicker ./eg-clicker
 bash launch.sh
 ```
 
-Keep the executable beside `EG-Clicker.py`, `eg_platform.py`, `launcher.py`, and `window_guard.py`
-when distributing it. `launch.sh` uses this executable when present and Python
-otherwise. `EG_CLICKER_PYTHON` selects an absolute Python interpreter path for Rust.
-The Fedora installer installs the Python application and does not require Rust.
-
-The inherited Windows backend is retained, but secure window verification is
-currently implemented only for KDE Wayland. This version deliberately refuses
-capture/click actions on Windows. The GUI and settings remain usable there.
-
-## Verification and diagnostics
+Keep the executable beside all Python modules, including `eg_ui.py`. Rust only
+loads its regular sibling `EG-Clicker.py`. `EG_CLICKER_PYTHON` can specify an
+absolute interpreter path. No executable is committed.
 
 ```bash
 python3 -m unittest discover -s tests -v
 cargo test
-# To include real Tk callback tests on Linux, use a working DISPLAY or Xvfb.
 python3 EG-Clicker.py --diagnose
 ```
 
-Automated checks cover config recovery and persistence, browser launch arguments,
-settings callbacks, and pointer verification with mocked desktop commands.
-They do not establish live Fedora Wayland pointer/audio behavior or browser
-navigation. Browser audio detection depends on the browser's audio sessions.
+Real Tk GUI tests run when `DISPLAY` is available (for example under Xvfb).
+Tests cover both click modes, persisted settings/logs, GUI controls, and coordinate
+and input checks with simulated desktop integration. Live Fedora behavior still
+requires desktop testing. Optional browser-window verification requires KDE
+Wayland. The inherited Windows backend is unvalidated for this update.
 
-## waytool service
+## Uninstall
 
-The upstream user service is static; it has no installation section and should
-be started, not enabled. The installer uses:
-
-```bash
-systemctl --user start waytool.service
-```
-
-If an older installer printed “The unit files have no installation config”
-but then printed “Installation succeeded”, the app files were installed.
-Check the running service with `systemctl --user is-active waytool.service`.
-
-## Installer and removal
-
-The installer pins waytool v1.0.1 RPM SHA-256 digests directly in the source.
-Before installing a downloaded RPM, it also verifies the bundled Sigstore build
-attestation with Fedora's `gh` package, requiring the publisher repository,
-release workflow identity, exact source commit, and a GitHub-hosted runner.
-A checksum or attestation failure stops the RPM installation. No GitHub login
-is required; HTTPS access to Sigstore trust metadata is required. Existing
-system-installed waytool is reused.
-
-Only Fedora repository dependencies are installed before verification. Signed
-build provenance establishes origin and integrity, not an audit of upstream RPM
-scripts. See [provenance details](provenance/README.md).
-
-The launcher loads only its sibling Python app and rejects script symlinks.
-Browser launch uses protected system paths instead of user PATH entries.
-
-Close EG-Clicker, then uninstall from any terminal directory with:
+Close EG-Clicker, then run from **any terminal directory**:
 
 ```bash
 bash "$HOME/.local/share/eg-clicker/uninstall-fedora.sh"
 ```
 
-The installed script path above works from any current directory.
-Type `REMOVE` when prompted. This removes EG-Clicker files, settings and logs.
-Shared system packages and waytool remain installed. `bash uninstall-fedora.sh`
-only works when your terminal is inside the extracted source folder; curl's
-installation staging folder is automatically deleted after installation.
+Type `REMOVE`. This removes the app, saved targets, settings and logs. Shared
+system packages and waytool remain. The short command `bash uninstall-fedora.sh`
+only works from the extracted source folder; curl's staging folder is deleted
+after installation.
 
 Licensed under the [MIT License](LICENSE).

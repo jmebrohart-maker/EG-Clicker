@@ -62,6 +62,7 @@ class GuiTests(unittest.TestCase):
 
     def test_missing_binding_has_visible_error_and_log(self):
         self.ui.target_window=None
+        self.ui.reliability['require_browser_window']=True
         with patch.object(self.ui,'validate_target',return_value=[]):
             self.ui.arm_button.invoke()
             self.pump_until(lambda:not self.ui.arming)
@@ -78,3 +79,36 @@ class GuiTests(unittest.TestCase):
         self.assertIn('ZeroDivisionError',self.ui.log_viewer.get('1.0','end'))
         self.ui.copy_logs()
         self.assertIn('ZeroDivisionError',self.root.clipboard_get())
+
+    def test_anywhere_target_can_capture_and_arm_without_browser_identity(self):
+        screens=[{'name':'screen','x':0,'y':0,'w':1920,'h':1080}]
+        with patch.object(app,'screen_layout',return_value=screens), patch.object(app,'pointer_position',return_value=(400,300)), patch.object(app,'capture_window',side_effect=RuntimeError('Not a browser')) as capture:
+            self.ui.save_target()
+            self.pump_until(lambda:self.ui.target==(400,300))
+            capture.assert_not_called()
+            self.assertIsNone(self.ui.target_window)
+            self.ui.arm_button.invoke()
+            self.pump_until(lambda:self.ui.armed)
+            self.dialog.assert_not_called()
+
+    def test_settings_window_mode_saves_and_reopens(self):
+        from tkinter import ttk
+        self.ui.toggle_reliability();self.root.update()
+        self.ui.require_window_var.set(True)
+        def widgets(parent):
+            for child in parent.winfo_children():
+                yield child
+                yield from widgets(child)
+        save=next(w for w in widgets(self.ui.settings_window) if isinstance(w,ttk.Button) and w.cget('text')=='Save settings')
+        save.invoke();self.ui.refresh_once()
+        self.assertTrue(app.load_reliability()['require_browser_window'])
+        self.ui.settings_window.destroy()
+        self.ui.require_window_var.set(False)
+        self.ui.toggle_reliability();self.root.update()
+        self.assertTrue(self.ui.require_window_var.get())
+
+    def test_activity_stays_visible_on_a_smaller_window(self):
+        self.root.geometry('900x650');self.root.update()
+        self.assertTrue(self.ui.log_text.winfo_ismapped())
+        self.assertGreater(self.ui.log_text.winfo_height(),100)
+        self.assertLessEqual(self.ui.log_text.winfo_rooty()+self.ui.log_text.winfo_height(),self.root.winfo_rooty()+self.root.winfo_height())

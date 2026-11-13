@@ -8,7 +8,7 @@ fail(){ echo; echo "INSTALL FAILED: $*" >&2; echo 'Press Enter to close.'; read 
 trap 'echo "Installer stopped at line $LINENO (exit code $?)." >&2' ERR
 
 printf '\n===== EG-Clicker • Fedora 44 KDE Wayland =====\n\n'
-[[ -r "$HERE/EG-Clicker.py" && -r "$HERE/eg_platform.py" && -r "$HERE/launcher.py" && -r "$HERE/window_guard.py" ]] || fail "EG-Clicker.py, eg_platform.py launcher.py and window_guard.py must be beside the installer. Extract the ZIP first."
+[[ -r "$HERE/EG-Clicker.py" && -r "$HERE/eg_platform.py" && -r "$HERE/launcher.py" && -r "$HERE/window_guard.py" && -r "$HERE/eg_ui.py" ]] || fail "EG-Clicker.py, eg_platform.py launcher.py, window_guard.py and eg_ui.py must be beside the installer. Extract the ZIP first."
 [[ -r "$HERE/eg_logo_icon.png" ]] || fail 'Missing icon file; extract entire ZIP.'
 [[ $(id -u) != 0 ]] || fail 'Run as your desktop user, not as root.'
 [[ ${XDG_SESSION_TYPE:-} == wayland ]] || fail 'Log into KDE Plasma Wayland, then run this installer.'
@@ -60,6 +60,7 @@ mkdir -p "$DEST" "$HOME/.local/share/applications" "$HOME/.local/share/icons/hic
 install -m 0644 "$HERE/EG-Clicker.py" "$DEST/EG-Clicker.py"
 install -m 0644 "$HERE/launcher.py" "$DEST/launcher.py"
 install -m 0644 "$HERE/window_guard.py" "$DEST/window_guard.py"
+install -m 0644 "$HERE/eg_ui.py" "$DEST/eg_ui.py"
 install -m 0644 "$HERE/eg_platform.py" "$DEST/eg_platform.py"
 install -m 0700 "$HERE/uninstall-fedora.sh" "$DEST/uninstall-fedora.sh"
 install -m 0644 "$HERE/eg_logo_icon.png" "$HOME/.local/share/icons/hicolor/96x96/apps/eg-clicker.png"
