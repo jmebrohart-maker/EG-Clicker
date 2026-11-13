@@ -1,0 +1,7 @@
+/target/
+/eg-clicker
+/eg-clicker.exe
+__pycache__/
+*.py[cod]
+.venv/
+/dist/
