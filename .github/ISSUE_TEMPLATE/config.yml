@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Installation and usage
+    url: https://github.com/jmebrohart-maker/EG-Clicker#install-and-run
+    about: Start with the installation guide and troubleshooting notes.

@@ -1,0 +1,46 @@
+name: Bug report
+description: Report a reproducible problem with EG-Clicker.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      placeholder: "3.1.0 (shown in the app header)"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Desktop and operating system
+      placeholder: "Fedora 44, KDE Plasma Wayland"
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Click destination mode
+      options:
+        - Anywhere on desktop
+        - Require the captured browser window
+        - Not applicable
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include the selected browser and how you installed the app.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Use Copy in Activity or Open Logs. Remove tokens, private URLs and personal details before posting.
+      render: text

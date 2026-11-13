@@ -1,48 +1,77 @@
-# EG-Clicker 3.1.0
-
-An audio controlled desktop clicker by **Ehrhart Group LLC**. Rust starts the
-application; Python/Tk handles the interface, settings, audio and pointer control.
-The interface uses standard Tk/ttk, with no extra GUI package to install.
+<p align="center">
+  <img src="eg_logo_icon.png" width="88" alt="Ehrhart Group logo">
+</p>
+<h1 align="center">EG-Clicker</h1>
+<p align="center"><strong>Audio-triggered desktop automation, with a modern EG-branded interface.</strong></p>
+<p align="center">Built by Ehrhart Group LLC · Python desktop app + Rust launcher</p>
+<p align="center">
+  <a href="https://github.com/jmebrohart-maker/EG-Clicker/releases/tag/v3.1.0"><img src="https://img.shields.io/badge/release-v3.1.0-438dff?style=flat-square" alt="Release v3.1.0"></a>
+  <a href="https://github.com/jmebrohart-maker/EG-Clicker/actions/workflows/ci.yml"><img src="https://github.com/jmebrohart-maker/EG-Clicker/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-65deb0?style=flat-square" alt="MIT license"></a>
+  <img src="https://img.shields.io/badge/Fedora-44%20%7C%20KDE%20Wayland-95a9c5?style=flat-square" alt="Fedora 44 KDE Wayland">
+</p>
+<p align="center">
+  <a href="https://github.com/jmebrohart-maker/EG-Clicker/releases/latest"><strong>Download</strong></a> ·
+  <a href="#install-and-run">Install</a> ·
+  <a href="CHANGELOG.md">Changelog</a> ·
+  <a href="https://github.com/jmebrohart-maker/EG-Clicker/issues/new/choose">Report an issue</a>
+</p>
 
 ![EG-Clicker interface](docs/interface.png)
 
-*Interface preview with sample activity.*
+*Interface preview with sample activity. Version 3.1.0.*
 
-## Install and run with curl
+EG-Clicker monitors your selected browser. When its audio stops for two seconds,
+it clicks a saved desktop location. **Anywhere on desktop** is the default;
+optional browser-window targeting is available in Settings.
 
-Close any older EG-Clicker window, then run this entire block as your normal user
-on **Fedora 44 KDE Plasma Wayland**. Approve Fedora's package authorization when
-prompted, and any waytool input/screen-sharing consent dialog.
+- Save a point, arm the clicker, and continue using your desktop.
+- Tune movement retries, tolerance and settling delay.
+- Keep activity visible and copy or export full diagnostic logs.
+- Retain settings and recent log history between sessions.
+
+## Install and run
+
+**Supported target: Fedora 44, KDE Plasma Wayland.** The installer sets up
+Python/Tkinter and desktop dependencies, adds EG-Clicker to your menu and starts
+it. No Rust compiler or GitHub login is required.
+
+Close any older EG-Clicker window. Run the entire block below as your normal
+desktop user, and approve Fedora's package authorization when prompted:
 
 ```bash
 (
   set -euo pipefail
+  EG_VERSION="3.1.0"
+  EG_RELEASE="https://github.com/jmebrohart-maker/EG-Clicker/releases/download/v${EG_VERSION}"
   EG_INSTALL_DIR="$(mktemp -d)"
   trap 'rm -rf -- "$EG_INSTALL_DIR"' EXIT
   curl --fail --location --show-error --retry 3 \
-    'https://github.com/jmebrohart-maker/EG-Clicker/archive/9dd4d029399668483be48ea9b00da9a0651e7e4f.tar.gz' \
-    --output "$EG_INSTALL_DIR/eg-clicker.tar.gz"
-  tar -xzf "$EG_INSTALL_DIR/eg-clicker.tar.gz" \
+    "$EG_RELEASE/EG-Clicker-v${EG_VERSION}.tar.gz" \
+    --output "$EG_INSTALL_DIR/EG-Clicker-v${EG_VERSION}.tar.gz"
+  curl --fail --location --show-error --retry 3 \
+    "$EG_RELEASE/SHA256SUMS" --output "$EG_INSTALL_DIR/SHA256SUMS"
+  (cd "$EG_INSTALL_DIR" && sha256sum --check --ignore-missing SHA256SUMS)
+  tar -xzf "$EG_INSTALL_DIR/EG-Clicker-v${EG_VERSION}.tar.gz" \
     --strip-components=1 -C "$EG_INSTALL_DIR"
   bash "$EG_INSTALL_DIR/install-fedora.sh"
 )
 ```
 
-The download is pinned to the 3.1.0 implementation commit. Requires `curl` and `tar`. The repository is public; no GitHub login is needed.
-The installer installs Fedora dependencies, adds the app to your menu and starts
-it. Confirm **3.1.0** in the app header. Rust is optional for this installation.
+Requires `curl`, `tar` and `sha256sum` (standard Fedora utilities). Accept any
+waytool input/screen-sharing consent dialog. Each release provides tar.gz/ZIP
+install bundles and `SHA256SUMS`; these bundles contain the application source
+and installer, not a standalone compiled GUI executable.
 
-After installation, launch **EG-Clicker** from the menu or run:
+After installing, open **EG-Clicker** from the application menu or run:
 
 ```bash
 python3 "$HOME/.local/share/eg-clicker/EG-Clicker.py"
 ```
 
-From an extracted source folder with dependencies already installed:
-
-```bash
-bash launch.sh
-```
+From an extracted bundle with dependencies already installed, use
+`bash launch.sh`. The release is public, and the app uses standard Tk/ttk
+without an additional GUI framework.
 
 ## Click anywhere, or restrict it in Settings
 
@@ -147,3 +176,14 @@ only works from the extracted source folder; curl's staging folder is deleted
 after installation.
 
 Licensed under the [MIT License](LICENSE).
+
+## Project information
+
+- [Release notes and downloads](https://github.com/jmebrohart-maker/EG-Clicker/releases)
+- [Changelog](CHANGELOG.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Release checklist](docs/RELEASING.md)
+
+Issues and focused pull requests are welcome. Please include your app version,
+desktop environment and relevant logs when reporting a problem.
