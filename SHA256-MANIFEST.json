@@ -1,0 +1,9 @@
+{
+  "Install EG-Clicker.desktop": "fcef7dca44c7ae9af15a3130ead88d3712baa3ccc4a58454ba9397dcc29e5462",
+  "install-fedora.sh": "8d4084b9cdd36cb830173f8a41ee0e91a56c9cd964ed5931e98635e9af9cd20a",
+  "uninstall-fedora.sh": "523443bf40cee8331e6a55db37af02f95389d3bf19106733d052a68303b2ff84",
+  "README.txt": "1a665dd53bb9d62f73398357f086256687fac8b50f42ed3ca1d02beaa31dfb7e",
+  "EG-Clicker.py": "b25d82138226d0d8fcb8361b153e637dba9df2897795de5df33736fdec87a3e6",
+  "eg_logo_icon.png": "f9fb61c2828233e6c0e83609f68685ba90d3c02ed2a2ba233022f50357f4b3fa",
+  "eg_platform.py": "4b52fe586f0c535a0aeb5461a87c73be230e4828d9a93d4072fb819b0c5eb2ac"
+}

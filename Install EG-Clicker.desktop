@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Install EG-Clicker
+Comment=Install EG-Clicker and dependencies on Fedora 44 KDE Wayland
+Icon=system-software-install
+Terminal=true
+Exec=/usr/bin/bash -c "exec /usr/bin/bash \"$(/usr/bin/dirname -- \"$1\")/install-fedora.sh\"" _ %k
+Categories=Utility;
