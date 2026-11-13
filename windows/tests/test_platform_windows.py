@@ -58,6 +58,10 @@ class AudioIsolationTests(unittest.TestCase):
             self.assertEqual(platform.browser_audio_state('Edge'),(True,None))
             self.assertEqual(platform.browser_audio_state('Firefox'),(False,None))
 
+    def test_chromium_selection_does_not_match_a_chrome_process(self):
+        with patch.object(platform,'_audio_backend',return_value=([self.session('chrome.exe',0.2)],object())):
+            self.assertEqual(platform.browser_audio_state('Chromium'),(False,None))
+
     def test_meter_failure_never_becomes_silence(self):
         with patch.object(platform,'_audio_backend',return_value=([self.session('firefox.exe',fail=True)],object())):
             state,error=platform.browser_audio_state('Firefox')

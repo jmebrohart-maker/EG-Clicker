@@ -9,7 +9,7 @@ IS_WINDOWS = os.name == 'nt'
 BROWSERS = ('Firefox', 'Chrome', 'Edge', 'Chromium', 'Brave', 'Opera', 'Vivaldi', 'Any Browser')
 WINDOWS_NAMES = {
     'Firefox': ('firefox.exe',), 'Chrome': ('chrome.exe',), 'Edge': ('msedge.exe',),
-    'Chromium': ('chromium.exe', 'chrome.exe'), 'Brave': ('brave.exe',),
+    'Chromium': ('chromium.exe',), 'Brave': ('brave.exe',),
     'Opera': ('opera.exe',), 'Vivaldi': ('vivaldi.exe',),
 }
 CONFIG = Path(os.environ.get('APPDATA', str(Path.home()))) / 'EG-Clicker' / 'config.json'

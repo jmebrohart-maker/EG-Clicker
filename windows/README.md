@@ -10,6 +10,8 @@
 
 *The Windows edition uses this EG layout with Segoe UI and native Windows audio/input integration.*
 
+[![Windows checks](https://github.com/jmebrohart-maker/EG-Clicker/actions/workflows/windows.yml/badge.svg)](https://github.com/jmebrohart-maker/EG-Clicker/actions/workflows/windows.yml)
+
 ## Install with one setup file
 
 1. Download **EG-Clicker-Windows-Setup-3.1.0.exe** from the Windows release.
@@ -40,7 +42,9 @@ again after enabling it. Both modes verify pointer placement. Movement retries,
 tolerance, settling delay, URL and browser selection persist between sessions.
 
 Activity stays visible; use **Copy**, **Export** or **Open Logs** for diagnostics.
-The selected browser's own audio sessions are metered, rather than the shared
+Chromium builds that name their process `chrome.exe` should use the Chrome
+selector. Audio matching uses browser executable names. The selected browser's
+own audio sessions are metered, rather than the shared
 speaker output. Other applications do not count as that browser's audio.
 
 The app runs at normal user privilege and cannot inject input into elevated
