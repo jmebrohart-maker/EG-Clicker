@@ -8,7 +8,7 @@
   ".github/pull_request_template.md": "11f6f4481a447b0184380a95d40e3cf7253a980df6bcc2da9f741e8a88706ba5",
   ".github/workflows/ci.yml": "6cfb900601cad61ceaa3283ca021696d93a91adbe5a10f0c068c75b9e6444cce",
   ".github/workflows/release.yml": "42884013d1343fdfc2f8a15f818bdfcbcb936eca0fc533fc6bbc32dcc4781a16",
-  ".github/workflows/windows.yml": "266c7228bf56e207ff565beb633eb0748c99c50bf559740de89416e0c89d00e8",
+  ".github/workflows/windows.yml": "69b88d932f59f0aa1aa6c44cfcf0859975e2b55849afd87193ac7003ca97b972",
   ".gitignore": "b07ff493cf436f6d339db4a86b07435acae4f07757974caeb92871fe60f96803",
   "CHANGELOG.md": "d3ef50d16286ff2ed45d424271ac03090608ff4c222638d69168cd267ebdf3ff",
   "CONTRIBUTING.md": "23f2401d81eba9fbe70491eb2ac78d187bc12fd60aec44ea4aee3583783545cc",
