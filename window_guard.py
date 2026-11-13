@@ -46,8 +46,11 @@ def snapshot(browser):
         raise RuntimeError('Secure window verification currently requires KDE Wayland; clicks disabled on Windows.')
     record = parse_snapshot(run_cmd(*SNAPSHOT_ARGS, timeout=12, quiet=True))
     image, started = process_identity(record['pid'])
-    if not _matches(image, browser, 'linux') or not _matches(record['class'], browser, 'linux'):
-        raise RuntimeError('The pointer is not over the selected browser. Save Next again on its window.')
+    # A Wayland app ID/WM_CLASS is not an executable name (e.g.
+    # org.mozilla.firefox or Navigator). Verify the protected process image;
+    # bind the exact observed class below rather than guessing class aliases.
+    if not _matches(image, browser, 'linux'):
+        raise RuntimeError(f'Expected {browser}; pointer window executable={image!r}, class={record["class"]!r}. Select the matching browser and save Next again.')
     if record['active'] != record['id']:
         raise RuntimeError('The captured browser must be the active window. No click was sent.')
     record.update(image=image, started=started)
@@ -80,5 +83,4 @@ def matches_saved_browser(saved, browser):
     """Changing to Any Browser must not silently discard a valid Firefox target."""
     return (isinstance(saved, dict) and isinstance(saved.get('image'), str)
             and isinstance(saved.get('class'), str)
-            and _matches(saved['image'], browser, 'linux')
-            and _matches(saved['class'], browser, 'linux'))
+            and _matches(saved['image'], browser, 'linux'))

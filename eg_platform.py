@@ -108,8 +108,40 @@ def parse_screens_text(text):
                 monitors.append(dict(name=title.group(1),x=x,y=y,w=w,h=h))
     return sorted(monitors,key=lambda d:(d['x'],d['y'],d['name']))
 
+def parse_waytool_monitors(text):
+    """Use live logical coordinates, not KScreen's stored configuration origin."""
+    monitors = []
+    blocks = re.split(r'^--- monitor\[\d+\] ---\s*$', text, flags=re.M)
+    for block in blocks[1:]:
+        fields = {}
+        for line in block.splitlines():
+            pair = line.split(None, 1)
+            if len(pair) == 2:
+                fields[pair[0]] = pair[1].strip()
+        try:
+            item = dict(name=fields['name'], x=int(fields['x']), y=int(fields['y']),
+                        w=int(fields['width']), h=int(fields['height']))
+        except (KeyError, ValueError) as exc:
+            raise ValueError('Invalid live waytool monitor geometry') from exc
+        if not item['name'] or item['w'] <= 0 or item['h'] <= 0:
+            raise ValueError('Empty live waytool monitor geometry')
+        monitors.append(item)
+    if not monitors or len({m['name'] for m in monitors}) != len(monitors):
+        raise ValueError('No unique live waytool monitors')
+    return sorted(monitors, key=lambda m:(m['x'], m['y'], m['name']))
+
+
 def _linux_screens():
     errors=[]
+    try:
+        live = run_cmd('waytool', 'monitors', timeout=8)
+    except RuntimeError as exc:
+        errors.append('live waytool geometry: ' + str(exc))
+    else:
+        try:
+            return parse_waytool_monitors(live)
+        except ValueError as exc:
+            raise RuntimeError('Invalid live monitor coordinates; refusing configured-coordinate fallback.') from exc
     try:
         result = parse_screens_json(run_cmd('kscreen-doctor','-j'))
         if result:

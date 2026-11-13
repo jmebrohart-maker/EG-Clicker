@@ -30,7 +30,7 @@ import tkinter as tk
 import webbrowser
 from tkinter import filedialog, scrolledtext, messagebox
 
-VERSION = '3.0.2'
+VERSION = '3.0.3'
 APP_TITLE = 'EG-Clicker • Ehrhart Group LLC'
 from eg_platform import (IS_WINDOWS, BROWSERS, CONFIG, LEGACY_CONFIG, LOG_FILE,
     run_cmd, pointer_position, parse_screens_json, parse_screens_text, screen_layout,
@@ -643,6 +643,7 @@ class App:
     def save_delayed(self):
         self.cancel_arming()
         self.armed = False
+        self.target_window = None
         self.verified = False
         self.move_result = 'UNTESTED'
         self.note('INFO', 'Capture: window minimizing. Place the physical pointer on Next within 4 seconds.')
@@ -662,9 +663,11 @@ class App:
                 record = save_target_record(here, screens, self.browser, window)
                 self.target, self.saved_layout = here, record['layout']
                 self.target_window = window
+                self.log('TARGET', f'Browser binding: image={window["image"]!r} class={window["class"]!r} geometry={window["geometry"]}')
                 self.verified = False
                 self.note('TARGET', f'Saved {here} on {monitor}. Ready to ARM; optional tests are under Testing & Troubleshooting.')
             except (OSError, RuntimeError) as exc:
+                self.target_window = None
                 self.note('ERROR', 'SAVE FAILED: ' + str(exc))
             finally:
                 self.events.put(('restore_window', None))

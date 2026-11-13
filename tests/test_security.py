@@ -33,6 +33,22 @@ class WindowGuardTests(unittest.TestCase):
     def test_same_window_accepted(self):
         self.assertTrue(guard.verify_window(self.saved,'Firefox',(100,100),0))
 
+    def test_firefox_wayland_app_id_is_not_treated_as_a_process_name(self):
+        self.command.return_value=output(klass='org.mozilla.firefox')
+        saved=guard.capture_window('Firefox',(100,100))
+        self.assertEqual(saved['class'],'org.mozilla.firefox')
+        self.assertTrue(guard.verify_window(saved,'Firefox',(100,100),0))
+        self.assertTrue(guard.matches_saved_browser(saved,'Any Browser'))
+
+    def test_foreign_process_with_firefox_class_still_rejected(self):
+        self.process.return_value=('chrome','10000')
+        with self.assertRaisesRegex(RuntimeError, 'executable='):
+            guard.capture_window('Firefox',(100,100))
+
+    def test_captured_window_class_changes_still_rejected(self):
+        self.command.return_value=output(klass='org.mozilla.firefox')
+        with self.assertRaises(RuntimeError):guard.verify_window(self.saved,'Firefox',(100,100),0)
+
     def test_covered_window_rejected(self):
         self.command.return_value=output(window=OTHER, active=OTHER)
         with self.assertRaises(RuntimeError):guard.verify_window(self.saved,'Firefox',(100,100),4)
