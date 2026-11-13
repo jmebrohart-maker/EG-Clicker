@@ -1,4 +1,4 @@
-# EG-Clicker 3.0
+# EG-Clicker 3.0.1
 
 Browser audio controlled clicker for Fedora 44 KDE Plasma Wayland, with a
 Rust launcher and Python/Tkinter desktop application.
@@ -6,7 +6,7 @@ Rust launcher and Python/Tkinter desktop application.
 ## Install and run with curl
 
 Run this entire block in a terminal on **Fedora 44 KDE Plasma Wayland**, as your
-normal desktop user. It downloads the complete 3.0 source, installs dependencies
+normal desktop user. It downloads the complete 3.0.1 source, installs dependencies
 through the Fedora authorization dialog, installs EG-Clicker, and launches it:
 
 ```bash
@@ -15,7 +15,7 @@ through the Fedora authorization dialog, installs EG-Clicker, and launches it:
   EG_INSTALL_DIR="$(mktemp -d)"
   trap 'rm -rf -- "$EG_INSTALL_DIR"' EXIT
   curl --fail --location --show-error --retry 3 \
-    'https://github.com/jmebrohart-maker/EG-Clicker/archive/054a63f8e8087c18065922637b928861e96b0816.tar.gz' \
+    'https://github.com/jmebrohart-maker/EG-Clicker/archive/b269fd1b4079b6fb6853991e6bbdf47404d7875e.tar.gz' \
     --output "$EG_INSTALL_DIR/eg-clicker.tar.gz"
   tar -xzf "$EG_INSTALL_DIR/eg-clicker.tar.gz" \
     --strip-components=1 -C "$EG_INSTALL_DIR"
@@ -23,7 +23,7 @@ through the Fedora authorization dialog, installs EG-Clicker, and launches it:
 )
 ```
 
-Requires `curl` and `tar`. The download is pinned to the 3.0 implementation
+Requires `curl` and `tar`. The download is pinned to the 3.0.1 security-fix implementation
 commit from [PR #1](https://github.com/jmebrohart-maker/EG-Clicker/pull/1).
 The repository must be **public** for this command to download without a token.
 Do not run the block with `sudo`; the installer requests authorization when needed.
@@ -78,10 +78,33 @@ when ready. Optional pointer tests and diagnostic logs are under
 **Testing & Troubleshooting**.
 
 Settings persist in `~/.config/eg-clicker/config.json` on Linux, including the
-browser, URL, target/display layout, retries, tolerance and settle delay.
+browser, URL, target/display layout, captured window identity, retries, tolerance
+and settle delay.
 Defaults: retries disabled, one extra retry when enabled, 4px tolerance,
 200ms settle delay. Pointer mismatches cancel the click and disarm the app.
 Monitor arrangement changes require capturing the target again.
+
+### Testing the security fixes
+
+After upgrading, **capture the target again with Save Next**. Old targets have
+no window identity and cannot be armed. Keep the selected browser active and
+uncovered. Closing/reopening, moving, or resizing it requires another capture.
+The supported click backend in this hardened release is Fedora 44 KDE Wayland
+with a native, protected system browser installation. Flatpak/portable browser
+identity may not be verifiable; in that case the app refuses to click.
+
+1. Launch the browser and capture Next. Optionally use Move Only first.
+2. Start browser audio, arm the app, and let playback stop. With the browser
+   active and unchanged, the normal delayed click should work.
+3. Repeat, but switch to another app or cover the target before audio stops.
+   The click must be cancelled and the clicker must disarm.
+4. Move/resize or close the browser and repeat. The click must be cancelled;
+   capture again before resuming.
+
+Window identity, process identity, geometry, focus, and the topmost window at
+the pointer are checked immediately before input. These checks reduce wrong
+window clicks, but a desktop change can still race the separate input command;
+this is not an atomic OS-level guarantee.
 
 ## Build the Rust launcher
 
@@ -95,13 +118,14 @@ cp target/release/eg-clicker ./eg-clicker
 bash launch.sh
 ```
 
-Keep the executable beside `EG-Clicker.py`, `eg_platform.py`, and `launcher.py`
+Keep the executable beside `EG-Clicker.py`, `eg_platform.py`, `launcher.py`, and `window_guard.py`
 when distributing it. `launch.sh` uses this executable when present and Python
-otherwise. `EG_CLICKER_PYTHON` selects a specific Python interpreter for Rust.
+otherwise. `EG_CLICKER_PYTHON` selects an absolute Python interpreter path for Rust.
 The Fedora installer installs the Python application and does not require Rust.
 
-The inherited Windows backend remains available using Python with Tkinter,
-`pycaw` and `comtypes`, but Windows has not been validated for this update.
+The inherited Windows backend is retained, but secure window verification is
+currently implemented only for KDE Wayland. This version deliberately refuses
+capture/click actions on Windows. The GUI and settings remain usable there.
 
 ## Verification and diagnostics
 
@@ -118,9 +142,20 @@ navigation. Browser audio detection depends on the browser's audio sessions.
 
 ## Installer and removal
 
-The installer retains the pinned waytool v1.0.1 RPM download. It requires an
-upstream SHA-256 digest in GitHub release metadata and checks the downloaded
-bytes. This is not an independently pinned checksum or an audit of RPM scripts.
+The installer pins waytool v1.0.1 RPM SHA-256 digests directly in the source.
+Before installing a downloaded RPM, it also verifies the bundled Sigstore build
+attestation with Fedora's `gh` package, requiring the publisher repository,
+release workflow identity, exact source commit, and a GitHub-hosted runner.
+A checksum or attestation failure stops the RPM installation. No GitHub login
+is required; HTTPS access to Sigstore trust metadata is required. Existing
+system-installed waytool is reused.
+
+Only Fedora repository dependencies are installed before verification. Signed
+build provenance establishes origin and integrity, not an audit of upstream RPM
+scripts. See [provenance details](provenance/README.md).
+
+The launcher loads only its sibling Python app and rejects script symlinks.
+Browser launch uses protected system paths instead of user PATH entries.
 
 Run `bash uninstall-fedora.sh` to remove EG-Clicker files, settings and logs;
 type `REMOVE` when prompted. Shared system packages and waytool remain installed.
