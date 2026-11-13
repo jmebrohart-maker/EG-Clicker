@@ -1,4 +1,4 @@
-# EG-Clicker 3.0.2
+# EG-Clicker 3.0.3
 
 Browser audio controlled clicker for Fedora 44 KDE Plasma Wayland, with a
 Rust launcher and Python/Tkinter desktop application.
@@ -6,7 +6,7 @@ Rust launcher and Python/Tkinter desktop application.
 ## Install and run with curl
 
 Run this entire block in a terminal on **Fedora 44 KDE Plasma Wayland**, as your
-normal desktop user. It downloads the complete 3.0.2 source, installs dependencies
+normal desktop user. It downloads the complete 3.0.3 source, installs dependencies
 through the Fedora authorization dialog, installs EG-Clicker, and launches it:
 
 ```bash
@@ -15,7 +15,7 @@ through the Fedora authorization dialog, installs EG-Clicker, and launches it:
   EG_INSTALL_DIR="$(mktemp -d)"
   trap 'rm -rf -- "$EG_INSTALL_DIR"' EXIT
   curl --fail --location --show-error --retry 3 \
-    'https://github.com/jmebrohart-maker/EG-Clicker/archive/18f228a94d6415ca2fd48a9f1a93d4fe8217990f.tar.gz' \
+    'https://github.com/jmebrohart-maker/EG-Clicker/archive/978fb4bcf475d283fcc6caaaa0cc86eeb9f7dbc4.tar.gz' \
     --output "$EG_INSTALL_DIR/eg-clicker.tar.gz"
   tar -xzf "$EG_INSTALL_DIR/eg-clicker.tar.gz" \
     --strip-components=1 -C "$EG_INSTALL_DIR"
@@ -23,7 +23,7 @@ through the Fedora authorization dialog, installs EG-Clicker, and launches it:
 )
 ```
 
-Requires `curl` and `tar`. The download is pinned to the 3.0.2 repair implementation
+Requires `curl` and `tar`. The download is pinned to the 3.0.3 repair implementation
 commit from [PR #1](https://github.com/jmebrohart-maker/EG-Clicker/pull/1).
 The repository must be **public** for this command to download without a token.
 Do not run the block with `sudo`; the installer requests authorization when needed.
@@ -36,10 +36,22 @@ python3 "$HOME/.local/share/eg-clicker/EG-Clicker.py"
 ```
 
 Close any older EG-Clicker window before reinstalling. The repaired window title
-must show **3.0.2**. This version keeps the UI responsive while checking Arm,
+must show **3.0.3**. This version keeps the UI responsive while checking Arm,
 preserves a valid Firefox target when selecting Any Browser, and provides an
 always-visible **Open Logs** button. Arming failures and callback exceptions now
 show an error dialog; callback errors stop automation and open the log window.
+
+Version 3.0.3 reads live logical monitor coordinates from waytool instead of
+using a potentially shifted KScreen configuration origin. Existing saved
+layouts may need capturing again. Firefox's Wayland app ID (such as
+`org.mozilla.firefox`) is not treated as a process name: the protected browser
+executable is verified, and the exact captured window class remains bound to
+the target. Capture errors report the detected executable/class when they do
+not match the chosen browser.
+
+After upgrading, select the browser, capture Next again, then arm. Keep the
+browser active and uncovered. A failed capture invalidates the current window
+binding rather than allowing an older target to appear ready.
 
 ## Start from an extracted download
 
