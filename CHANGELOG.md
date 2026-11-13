@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased — licensing
+
+- Adopt the EG-Clicker Free Use / No Modifications License 1.0 for future
+  distributions: free personal/noncommercial use and commercial use below 100
+  employees; written permission required for commercial use at 100 or more
+  employees and for modifications.
+- Preserve prior MIT grants and third-party licenses. Published 3.1.0 release
+  assets and tags retain their original terms.
+
+
 ## Windows 3.1.0 Preview — 2026-11-13
 
 - Modern EG interface and a separate Windows project under `windows/`.

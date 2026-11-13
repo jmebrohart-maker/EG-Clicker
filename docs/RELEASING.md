@@ -34,3 +34,11 @@ and verifies the uploaded checksums, and optionally publishes it as latest. It
 uses GitHub's repository-scoped token; no personal access token or local upload
 credentials are required. Published release assets are not overwritten. Existing
 curated draft notes are preserved; a new draft gets generated notes.
+
+## Licensing changes
+
+New distributions must include the current LICENSE, LICENSE-LEGACY-MIT.txt and
+third-party notices. Do not replace existing release assets or move old tags to
+apply a new license retroactively. The v3.1.0 and windows-v3.1.0 downloads were
+published under MIT and retain those terms. Use a new version/tag for any future
+package carrying the custom license.

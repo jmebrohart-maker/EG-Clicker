@@ -1,45 +1,23 @@
-# Contributing to EG-Clicker
+# Reports and development permissions
 
-Bug reports, documentation fixes and focused improvements are welcome.
-For a larger change, open an issue describing the workflow before implementing it.
+Bug reports, feature suggestions and security reports are welcome. Use the
+[issue templates](https://github.com/jmebrohart-maker/EG-Clicker/issues/new/choose)
+and follow [SECURITY.md](SECURITY.md) for sensitive reports.
 
-## Development
+EG-Clicker now uses a [custom license](LICENSE) that requires separate written
+permission for modifications, including private changes and modified pull
+requests. Please request that permission before changing the software. An issue
+or suggestion does not itself grant permission. Any authorized contribution
+needs separately agreed licensing terms; no blanket contribution license is
+implied. Existing MIT rights for earlier material remain unaffected.
 
-Use Python 3.11 or newer with Tkinter, and current stable Rust for launcher work.
-The supported desktop is Fedora 44 KDE Plasma Wayland. Keep development tools in
-a virtual environment; do not run the GUI or development commands as root.
+Users may inspect the source, build it unchanged, change application settings
+and report results. See the edition-specific README for build instructions.
 
-```bash
-python3 EG-Clicker.py
-python3 -m unittest discover -s tests -v
-cargo test --locked
-shellcheck install-fedora.sh uninstall-fedora.sh launch.sh
-python3 scripts/verify_manifest.py
-```
+## Maintainer checks
 
-On headless Linux, use `xvfb-run -a python3 -m unittest discover -s tests -v` to
-include real Tk callback tests. They simulate desktop input and do not establish
-live Wayland behavior. Installer dependency installation is separate from tests.
-
-## Changes and pull requests
-
-Keep changes focused. Explain the user-visible behavior and how you checked it.
-Add a regression test for behavior changes. For pointer changes, retain live
-position verification and test both Anywhere and browser-only modes. Never add
-a fallback that clicks after failed verification in the restricted mode.
-
-Preserve the EG logo, company attribution, license and accessible color contrast.
-Avoid new runtime dependencies unless the benefit and installation path are clear.
-Do not commit generated binaries, credentials, user configs or diagnostic logs.
-
-If tracked files change, refresh `SHA256-MANIFEST.json` with SHA-256 digests for
-all tracked files except the manifest itself. The manifest check must pass.
-
-## Reporting security problems
-
-Read [SECURITY.md](SECURITY.md) before posting sensitive details.
-
-## Releases
-
-See [the release checklist](docs/RELEASING.md). Contributions are provided under
-the repository's [MIT license](LICENSE).
+For Licensor and contributors with written permission: keep changes focused,
+preserve attribution and third-party notices, and verify pointer placement.
+Do not commit credentials, user configs, logs or generated binaries. Refresh
+both source manifests when tracked files change. Run the appropriate edition's
+tests and checksum verification before release. See [release instructions](docs/RELEASING.md).

@@ -104,4 +104,10 @@ input; real Windows 11 browser/audio workflows still require user testing.
 
 The uploaded 2.x Windows files were modernized into this isolated project. The
 Fedora application and its published release are maintained separately in the
-same repository. Both editions retain the [MIT license](../LICENSE) and EG branding.
+same repository. Both editions retain EG branding. Current source uses the
+[EG-Clicker Free Use / No Modifications License](../LICENSE): free personal and
+noncommercial use, free commercial use below 100 employees, and separate written
+permission for commercial use at 100 or more employees or any modifications.
+Settings changes and building unchanged source are allowed. The already-published
+`windows-v3.1.0` preview retains its original MIT license; these new terms apply
+prospectively. Third-party components keep their own licenses.

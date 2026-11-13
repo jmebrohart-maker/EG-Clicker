@@ -1,21 +1,72 @@
-MIT License
-
+EG-Clicker Free Use / No Modifications License 1.0
+Effective: November 13, 2026
 Copyright (c) 2026 jmebrohart-maker
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. Scope and definitions
+"Software" means EG-Clicker code and documentation distributed under this
+license. "Licensor" means the copyright holder identified above.
+"Organization" includes a business and its parent, subsidiaries and other
+entities under common control. Employee count is the total number of full-time
+and part-time employees across that group worldwide at the time of use.
+"Commercial use" means use in connection with business operations, paid work,
+or other activity intended for commercial advantage or monetary compensation,
+including internal business use and use by a contractor for a client. For use
+on behalf of a client or employer, that organization's employee count applies.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+2. Free permitted use
+Subject to these terms, Licensor grants a nonexclusive, worldwide, royalty-free,
+nontransferable license to download, install, run and make backup copies of the
+unmodified Software for:
+(a) personal and noncommercial use; and
+(b) commercial use by individuals and organizations with fewer than 100 employees.
+Noncommercial use is permitted regardless of employee count. If an organization
+reaches 100 employees, its commercial use requires the permission in section 3.
+Inspection of the source and building an unchanged copy for a permitted use are
+allowed. Ordinary installation, changing application settings, saving user data
+and operating-system changes made automatically during execution are not
+modifications of the Software for purposes of this license.
 
+3. Commercial use by larger organizations
+Commercial use by or on behalf of an organization with 100 or more employees
+requires a separate written commercial license from Licensor before that use.
+This license does not grant that permission. Request terms through
+https://github.com/jmebrohart-maker/EG-Clicker/issues with the title
+"Commercial licensing inquiry"; do not post confidential business information.
+
+4. No modifications
+You may not modify, adapt, translate, patch, create derivative works of, or
+distribute modified versions of the Software without separate written
+permission from Licensor. This restriction includes private modifications.
+Rights that applicable law does not allow to be restricted are unaffected.
+
+5. Unmodified redistribution
+You may share exact, unmodified copies free of charge if you include this
+license and all copyright, attribution and third-party notices. Recipients
+must obtain and exercise their rights under this license directly from
+Licensor. You may not sell copies, sublicense the Software, or remove notices.
+No trademark rights or right to imply endorsement are granted.
+
+6. Earlier releases and third-party material
+This license applies prospectively to material distributed under it. It does
+not revoke or restrict rights already granted under the MIT license for
+previously published versions or material. In particular, releases v3.1.0 and
+windows-v3.1.0 and their MIT-licensed source remain available under their
+original terms. The original notice is retained in LICENSE-LEGACY-MIT.txt.
+Third-party components retain their own licenses; this license does not limit
+rights granted by their respective copyright holders. Licensor grants only
+rights it owns or is authorized to grant. Nothing here restricts Licensor's
+own development or separately authorized work.
+
+7. Termination
+Permission under this license ends automatically if you violate its terms.
+You must then cease use and distribution authorized only by this license.
+Termination does not affect independent rights under earlier or third-party
+licenses, or any rights that cannot lawfully be terminated.
+
+8. Disclaimer and limitation of liability
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NONINFRINGEMENT. TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE
+AUTHORS AND COPYRIGHT HOLDERS ARE NOT LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE, ARISING FROM OR IN
+CONNECTION WITH THE SOFTWARE OR ITS USE.

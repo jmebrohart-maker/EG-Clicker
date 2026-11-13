@@ -10,6 +10,7 @@ New-Item -ItemType Directory -Force -Path $dist, $build | Out-Null
 python -m PyInstaller --noconfirm --clean --windowed --onedir --name EG-Clicker --icon "$source\assets\eg-clicker.ico" --manifest "$source\packaging\app.manifest" --version-file "$source\packaging\version-info.txt" --paths "$source" --collect-submodules pycaw --collect-submodules comtypes --collect-submodules psutil --distpath "$dist\app" --workpath "$build\pyinstaller" --specpath "$build" "$source\main.py"
 if ($LASTEXITCODE -ne 0) { throw 'PyInstaller build failed.' }
 Copy-Item -LiteralPath (Join-Path (Split-Path -Parent $source) 'LICENSE') -Destination "$dist\app\EG-Clicker\LICENSE.txt" -Force
+Copy-Item -LiteralPath (Join-Path (Split-Path -Parent $source) 'LICENSE-LEGACY-MIT.txt') -Destination "$dist\app\EG-Clicker\LICENSE-LEGACY-MIT.txt" -Force
 python "$source\scripts\collect_licenses.py" "$dist\app\EG-Clicker"
 if ($LASTEXITCODE -ne 0) { throw 'License collection failed.' }
 $compiler = Join-Path ${env:ProgramFiles(x86)} 'NSIS\makensis.exe'

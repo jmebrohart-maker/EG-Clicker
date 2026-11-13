@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/jmebrohart-maker/EG-Clicker/releases/tag/v3.1.0"><img src="https://img.shields.io/badge/release-v3.1.0-438dff?style=flat-square" alt="Release v3.1.0"></a>
   <a href="https://github.com/jmebrohart-maker/EG-Clicker/actions/workflows/ci.yml"><img src="https://github.com/jmebrohart-maker/EG-Clicker/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-65deb0?style=flat-square" alt="MIT license"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Custom-65deb0?style=flat-square" alt="EG-Clicker custom license"></a>
   <img src="https://img.shields.io/badge/Fedora-44%20%7C%20KDE%20Wayland-95a9c5?style=flat-square" alt="Fedora 44 KDE Wayland">
 </p>
 <p align="center">
@@ -186,7 +186,20 @@ system packages and waytool remain. The short command `bash uninstall-fedora.sh`
 only works from the extracted source folder; curl's staging folder is deleted
 after installation.
 
-Licensed under the [MIT License](LICENSE).
+Licensed under the [EG-Clicker Free Use / No Modifications License 1.0](LICENSE).
+Personal and noncommercial use is free. Commercial use is free for individuals
+and organizations with fewer than 100 employees; organizations with **100 or more
+employees** need a separate written commercial license. Employee count includes
+parent companies and affiliates under common control. **Modifications require
+written permission**, including private modifications. Changing app settings and
+building unchanged source are allowed. Unmodified copies may be shared free of
+charge with all notices intact.
+
+This is a custom source-available license, not an OSI-approved open-source license.
+For commercial permission, [open a licensing inquiry](https://github.com/jmebrohart-maker/EG-Clicker/issues/new?title=Commercial%20licensing%20inquiry).
+Previously published MIT releases, including `v3.1.0` and `windows-v3.1.0`, retain
+their original rights; see [the original MIT notice](LICENSE-LEGACY-MIT.txt).
+Third-party dependencies keep their own licenses.
 
 ## Project information
 

@@ -8,6 +8,6 @@ VSVersionInfo(
     StringStruct('OriginalFilename','EG-Clicker.exe'),
     StringStruct('ProductName','EG-Clicker for Windows'),
     StringStruct('ProductVersion','3.1.0'),
-    StringStruct('LegalCopyright','Copyright (c) 2026 jmebrohart-maker. MIT License.')
+    StringStruct('LegalCopyright','Copyright (c) 2026 jmebrohart-maker. EG-Clicker Free Use / No Modifications License.')
   ])]), VarFileInfo([VarStruct('Translation',[1033,1200])])]
 )

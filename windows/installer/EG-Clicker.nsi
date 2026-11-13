@@ -31,7 +31,7 @@ VIAddVersionKey /LANG=1033 "CompanyName" "Ehrhart Group LLC"
 VIAddVersionKey /LANG=1033 "FileDescription" "EG-Clicker Windows Setup"
 VIAddVersionKey /LANG=1033 "FileVersion" "${AppVersion}.0"
 VIAddVersionKey /LANG=1033 "ProductVersion" "${AppVersion}"
-VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright (c) 2026 jmebrohart-maker. MIT License."
+VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright (c) 2026 jmebrohart-maker. EG-Clicker Free Use / No Modifications License."
 
 !macro CheckInstance
   System::Call 'kernel32::CreateMutexW(p 0, i 0, w "Local\EhrhartGroup.EGClicker.Windows") p.r0 ?e'
@@ -98,6 +98,7 @@ Section "Uninstall"
   DeleteRegKey HKCU "Software\Ehrhart Group\EG-Clicker"
   Delete "$INSTDIR\EG-Clicker.exe"
   Delete "$INSTDIR\LICENSE.txt"
+  Delete "$INSTDIR\LICENSE-LEGACY-MIT.txt"
   RMDir /r "$INSTDIR\THIRD-PARTY-LICENSES"
   RMDir /r "$INSTDIR\_internal"
   Delete "$INSTDIR\Uninstall.exe"
