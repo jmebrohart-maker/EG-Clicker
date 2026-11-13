@@ -3,7 +3,39 @@
 Browser audio controlled clicker for Fedora 44 KDE Plasma Wayland, with a
 Rust launcher and Python/Tkinter desktop application.
 
-## Start the app
+## Install and run with curl
+
+Run this entire block in a terminal on **Fedora 44 KDE Plasma Wayland**, as your
+normal desktop user. It downloads the complete 3.0 source, installs dependencies
+through the Fedora authorization dialog, installs EG-Clicker, and launches it:
+
+```bash
+(
+  set -euo pipefail
+  EG_INSTALL_DIR="$(mktemp -d)"
+  trap 'rm -rf -- "$EG_INSTALL_DIR"' EXIT
+  curl --fail --location --show-error --retry 3 \
+    'https://github.com/jmebrohart-maker/EG-Clicker/archive/054a63f8e8087c18065922637b928861e96b0816.tar.gz' \
+    --output "$EG_INSTALL_DIR/eg-clicker.tar.gz"
+  tar -xzf "$EG_INSTALL_DIR/eg-clicker.tar.gz" \
+    --strip-components=1 -C "$EG_INSTALL_DIR"
+  bash "$EG_INSTALL_DIR/install-fedora.sh"
+)
+```
+
+Requires `curl` and `tar`. The download is pinned to the 3.0 implementation
+commit from [PR #1](https://github.com/jmebrohart-maker/EG-Clicker/pull/1).
+The repository must be **public** for this command to download without a token.
+Do not run the block with `sudo`; the installer requests authorization when needed.
+Rust is optional and is not required for this installation.
+
+After installation, open **EG-Clicker** from the application menu, or run:
+
+```bash
+python3 "$HOME/.local/share/eg-clicker/EG-Clicker.py"
+```
+
+## Start from an extracted download
 
 Extract or clone the whole repository. On Fedora 44 KDE Wayland, run:
 
