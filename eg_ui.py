@@ -98,6 +98,7 @@ def build_ui(a, version, logo_data):
         value.pack(anchor='w', pady=(5, 0))
         values.append(value)
     a.target_label, a.audio_label, a.pointer_label = values
+    button(tile, 'Reconnect pointer', a.reconnect_pointer, small=True).pack(anchor='w', pady=(5, 0))
 
     body = tk.Frame(root, bg=NAVY)
     body.pack(fill='both', expand=True, padx=24)

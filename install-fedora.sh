@@ -62,6 +62,8 @@ install -m 0644 "$HERE/launcher.py" "$DEST/launcher.py"
 install -m 0644 "$HERE/window_guard.py" "$DEST/window_guard.py"
 install -m 0644 "$HERE/eg_ui.py" "$DEST/eg_ui.py"
 install -m 0644 "$HERE/eg_platform.py" "$DEST/eg_platform.py"
+install -m 0644 "$HERE/LICENSE" "$DEST/LICENSE"
+install -m 0644 "$HERE/LICENSE-LEGACY-MIT.txt" "$DEST/LICENSE-LEGACY-MIT.txt"
 install -m 0700 "$HERE/uninstall-fedora.sh" "$DEST/uninstall-fedora.sh"
 install -m 0644 "$HERE/eg_logo_icon.png" "$HOME/.local/share/icons/hicolor/96x96/apps/eg-clicker.png"
 

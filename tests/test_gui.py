@@ -1,5 +1,6 @@
 """Real Tk callback integration tests; run under an X server (or Xvfb)."""
 import os
+import gc
 from pathlib import Path
 import tempfile
 import threading
@@ -11,12 +12,26 @@ from test_app import app
 
 @unittest.skipUnless(os.environ.get('DISPLAY'), 'Requires an X display')
 class GuiTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # Tk finalizers must run on the main thread, never a worker's GC cycle.
+        cls.gc_was_enabled = gc.isenabled()
+        gc.disable()
+
+    @classmethod
+    def tearDownClass(cls):
+        gc.collect()
+        if cls.gc_was_enabled:
+            gc.enable()
+
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
         root=tk.Tk();self.root=root
         original=app.LogWriter
         for patcher in (patch.object(app,'CONFIG',Path(self.temp.name)/'config.json'),
                         patch.object(app,'LogWriter',side_effect=lambda:original(Path(self.temp.name)/'app.log')),
+                        patch.object(app,'pointer_health',return_value='ready'),
+                        patch.object(app,'pointer_position',return_value=(100,100)),
                         patch.object(app.App,'audio_watcher'), patch.object(app.App,'refresh_diagnostics')):
             patcher.start();self.addCleanup(patcher.stop)
         self.error=patch.object(app.messagebox,'showerror');self.dialog=self.error.start();self.addCleanup(self.error.stop)
@@ -28,6 +43,9 @@ class GuiTests(unittest.TestCase):
 
     def shutdown(self):
         self.ui.running=False
+        for worker in threading.enumerate():
+            if worker.name.startswith('EG-'):
+                worker.join(timeout=2)
         for ident in self.root.tk.call('after','info'):
             self.root.after_cancel(ident)
         self.root.destroy()
@@ -112,3 +130,18 @@ class GuiTests(unittest.TestCase):
         self.assertTrue(self.ui.log_text.winfo_ismapped())
         self.assertGreater(self.ui.log_text.winfo_height(),100)
         self.assertLessEqual(self.ui.log_text.winfo_rooty()+self.ui.log_text.winfo_height(),self.root.winfo_rooty()+self.root.winfo_height())
+
+    def test_arm_rejects_offline_pointer_backend(self):
+        with patch.object(self.ui, 'validate_target', return_value=[]), patch.object(app, 'pointer_health', side_effect=RuntimeError('Reconnect pointer')):
+            self.ui.arm_button.invoke()
+            self.pump_until(lambda: not self.ui.arming)
+            self.assertFalse(self.ui.armed)
+            self.dialog.assert_called_once()
+
+    def test_reconnect_updates_ready_without_arming(self):
+        with patch.object(app, 'connect_pointer', return_value='ready') as connect:
+            self.ui.reconnect_pointer()
+            self.pump_until(lambda: not self.ui.pointer_connecting)
+            connect.assert_called_once()
+            self.assertFalse(self.ui.armed)
+            self.assertIn('READY', self.ui.pointer_label.cget('text'))

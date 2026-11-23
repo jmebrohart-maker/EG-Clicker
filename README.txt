@@ -5,7 +5,7 @@
 <p align="center"><strong>Audio-triggered desktop automation, with a modern EG-branded interface.</strong></p>
 <p align="center">Built by Ehrhart Group LLC · Desktop automation for Fedora and Windows</p>
 <p align="center">
-  <a href="https://github.com/jmebrohart-maker/EG-Clicker/releases/tag/v3.1.0"><img src="https://img.shields.io/badge/release-v3.1.0-438dff?style=flat-square" alt="Release v3.1.0"></a>
+  <a href="https://github.com/jmebrohart-maker/EG-Clicker/releases/tag/v3.1.1"><img src="https://img.shields.io/badge/release-v3.1.1-438dff?style=flat-square" alt="Release v3.1.1"></a>
   <a href="https://github.com/jmebrohart-maker/EG-Clicker/actions/workflows/ci.yml"><img src="https://github.com/jmebrohart-maker/EG-Clicker/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Custom-65deb0?style=flat-square" alt="EG-Clicker custom license"></a>
   <img src="https://img.shields.io/badge/Fedora-44%20%7C%20KDE%20Wayland-95a9c5?style=flat-square" alt="Fedora 44 KDE Wayland">
@@ -22,7 +22,7 @@
 | Platform | Download | Project guide |
 | --- | --- | --- |
 | **Windows 11 x64** | [One-click Setup / Portable ZIP — Preview](https://github.com/jmebrohart-maker/EG-Clicker/releases/tag/windows-v3.1.0) | [Windows project](windows/README.md) |
-| **Fedora 44 KDE Wayland** | [Fedora 3.1.0 install bundles](https://github.com/jmebrohart-maker/EG-Clicker/releases/tag/v3.1.0) | [Fedora install command](#install-and-run) |
+| **Fedora 44 KDE Wayland** | [Fedora 3.1.1 install bundles](https://github.com/jmebrohart-maker/EG-Clicker/releases/tag/v3.1.1) | [Fedora install command](#install-and-run) |
 
 The Windows edition includes its own runtime and native uninstaller. Both editions
 use the EG interface, persistent settings and Anywhere-on-desktop mode. The Windows
@@ -53,7 +53,7 @@ desktop user, and approve Fedora's package authorization when prompted:
 ```bash
 (
   set -euo pipefail
-  EG_VERSION="3.1.0"
+  EG_VERSION="3.1.1"
   EG_RELEASE="https://github.com/jmebrohart-maker/EG-Clicker/releases/download/v${EG_VERSION}"
   EG_INSTALL_DIR="$(mktemp -d)"
   trap 'rm -rf -- "$EG_INSTALL_DIR"' EXIT
@@ -83,6 +83,23 @@ python3 "$HOME/.local/share/eg-clicker/EG-Clicker.py"
 From an extracted bundle with dependencies already installed, use
 `bash launch.sh`. The release is public, and the app uses standard Tk/ttk
 without an additional GUI framework.
+
+## Pointer not ready or missing coordinates
+
+Press **Reconnect pointer** below the Pointer status. Accept KDE's desktop-control
+permission prompt if shown; the connection check waits up to about 45 seconds.
+This starts the installed waytool user service without restarting an active
+session, moving the pointer or sending a click. It does not enable the service at
+login or automatically re-arm the clicker. After READY, save the target again and
+press Arm. After logout, a revoked portal session, or a reboot, reconnect if needed.
+
+Coordinate reads retry three fresh KWin queries when output is empty or invalid.
+Retries never substitute the saved target or a previous pointer location. If all
+reads fail, the operation stops. If the issue persists, use **Pointer tests →
+Check setup** and export Activity. The logs distinguish unavailable waytool input
+control from failed KWin coordinate reads. A successfully read position outside
+the target tolerance still stops the click; do not increase tolerance to hide a
+large positioning error.
 
 ## Click anywhere, or restrict it in Settings
 

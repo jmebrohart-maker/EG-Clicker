@@ -30,12 +30,12 @@ import tkinter as tk
 import webbrowser
 from tkinter import filedialog, scrolledtext, messagebox
 
-VERSION = '3.1.0'
+VERSION = '3.1.1'
 APP_TITLE = 'EG-Clicker • Ehrhart Group LLC'
 from eg_platform import (IS_WINDOWS, BROWSERS, CONFIG, LEGACY_CONFIG, LOG_FILE,
     run_cmd, pointer_position, parse_screens_json, parse_screens_text, screen_layout,
     find_screen, layout_key, desktop_bounds, move_to, click_at,
-    browser_audio_state, init_audio_thread, close_audio_thread, init_desktop, pointer_health)
+    browser_audio_state, init_audio_thread, close_audio_thread, init_desktop, pointer_health, connect_pointer)
 # Defaults match the last known-working Fedora 44 release.
 DEFAULT_RELIABILITY = {'retries_enabled': False, 'retry_count': 1,
                        'tolerance_px': 4, 'settle_ms': 200,
@@ -407,7 +407,7 @@ class App:
         except RuntimeError as exc:
             self.note('ERROR', 'Displays: ' + str(exc))
         try:
-            self.log('POINTER', f'pointer={pointer_position()}')
+            self.log('POINTER', f'pointer={pointer_position(self.log)}')
             self.log('POINTER', f'health={pointer_health(self.log)[:800]}')
             self.events.put(('pointer', ('READY • ' + ('Win32' if IS_WINDOWS else 'waytool'), GREEN)))
         except RuntimeError as exc:
@@ -432,6 +432,30 @@ class App:
     def refresh_diagnostics(self):
         threading.Thread(target=self.snapshot_diagnostics, name='EG-Diagnose', daemon=True).start()
 
+    def reconnect_pointer(self):
+        if getattr(self, 'pointer_connecting', False):
+            self.note('INFO', 'Pointer connection is already pending. Check the desktop permission prompt.')
+            return
+        if self.action_lock.locked():
+            self.note('WARN', 'Wait for the current pointer operation to finish before reconnecting.')
+            return
+        self.armed = False
+        self.cancel_arming()
+        self.pointer_connecting = True
+        self.events.put(('pointer', ('CONNECTING…', YELLOW)))
+        self.note('INFO', 'Connecting pointer control. Accept the desktop-control prompt if shown. No movement or click is sent.')
+        def worker():
+            try:
+                self.log('POINTER', connect_pointer(self.log)[:800])
+                self.events.put(('pointer', ('READY • ' + ('Win32' if IS_WINDOWS else 'waytool'), GREEN)))
+                self.note('INFO', 'Pointer control connected. Save Next again, then Arm.')
+            except RuntimeError as exc:
+                self.events.put(('pointer', ('NOT READY', RED)))
+                self.note('ERROR', str(exc))
+            finally:
+                self.pointer_connecting = False
+        threading.Thread(target=worker, name='EG-PointerConnect', daemon=True).start()
+
     def save_delayed(self):
         self.cancel_arming()
         self.armed = False
@@ -445,8 +469,9 @@ class App:
     def save_target(self):
         def worker():
             try:
+                pointer_health(self.log)
                 screens = screen_layout()
-                here = pointer_position()
+                here = pointer_position(self.log)
                 monitor = find_screen(*here, screens)
                 self.log('TARGET', f'Captured pointer position={here}; monitor={monitor}; layout={screens}')
                 if not monitor:
@@ -626,6 +651,14 @@ class App:
         def worker():
             error = None
             try:
+                # Do not arm against configured monitor geometry while input is offline.
+                try:
+                    pointer_health(self.log)
+                    pointer_position(self.log)
+                except RuntimeError:
+                    self.events.put(('pointer', ('NOT READY', RED)))
+                    raise
+                self.events.put(('pointer', ('READY • ' + ('Win32' if IS_WINDOWS else 'waytool'), GREEN)))
                 self.validate_target()
                 if self.reliability.get('require_browser_window', False) and not isinstance(window, dict):
                     raise RuntimeError('The last capture did not save a browser identity. Select the browser, then use Save Next again. Open Logs for capture errors.')

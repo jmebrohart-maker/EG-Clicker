@@ -5,6 +5,7 @@ Windows uses Win32 cursor coordinates and Core Audio sessions via pycaw.
 """
 from __future__ import annotations
 import ctypes
+from contextlib import nullcontext
 import json
 import os
 from pathlib import Path
@@ -15,6 +16,7 @@ import time
 import threading
 
 IS_WINDOWS = os.name == 'nt'
+_kdotool_lock = threading.Lock()
 BROWSERS = ('Firefox', 'Chrome', 'Edge', 'Chromium', 'Brave', 'Opera', 'Vivaldi', 'Any Browser')
 CONFIG = (Path(os.environ.get('APPDATA', str(Path.home()))) / 'EG-Clicker' / 'config.json') if IS_WINDOWS else (Path.home() / '.config' / 'eg-clicker' / 'config.json')
 LEGACY_CONFIG = Path.home() / '.config' / 'razer-audio-clicker.json' if not IS_WINDOWS else Path.home() / '.eg-clicker-legacy-unused'
@@ -65,7 +67,10 @@ def run_cmd(*args, timeout=12, trace=None, quiet=False):
         trace('COMMAND', 'argv=' + ' '.join(map(str, args)))
     start = time.monotonic()
     try:
-        res = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+        # KWin script queries from capture, diagnostics and actions must not overlap.
+        lock = _kdotool_lock if Path(args[0]).name == 'kdotool' else nullcontext()
+        with lock:
+            res = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
     except (subprocess.TimeoutExpired, OSError) as exc:
         raise RuntimeError(f'{args[0]} failed: {exc}') from exc
     if trace and not quiet:
@@ -222,12 +227,49 @@ def pointer_position(trace=None):
         if not user32.GetCursorPos(ctypes.byref(point)):
             raise RuntimeError('GetCursorPos failed')
         return point.x,point.y
-    out=run_cmd('kdotool','getmouselocation',trace=trace,quiet=True)
-    mx=re.search(r'\bx\s*[:=]\s*(-?\d+)',out,re.I)
-    my=re.search(r'\by\s*[:=]\s*(-?\d+)',out,re.I)
-    if not (mx and my):
-        raise RuntimeError('Unable to parse kdotool pointer: '+out.strip()[:150])
-    return int(mx.group(1)),int(my.group(1))
+    # KWin can return exit=0 with empty stdout. Retry only the read, never a
+    # movement/click, and never substitute cached or requested coordinates.
+    failures = []
+    for attempt in range(3):
+        try:
+            out = run_cmd('kdotool', 'getmouselocation', timeout=3, trace=trace, quiet=True)
+            mx = re.search(r'\bx\s*[:=]\s*(-?\d+)(?=\s|$)', out, re.I)
+            my = re.search(r'\by\s*[:=]\s*(-?\d+)(?=\s|$)', out, re.I)
+            if mx and my:
+                if failures and trace:
+                    trace('POINTER', f'Live coordinate read recovered on attempt {attempt + 1}.')
+                return int(mx.group(1)), int(my.group(1))
+            failure = 'empty response' if not out.strip() else 'invalid response: ' + repr(out[:150])
+        except RuntimeError as exc:
+            failure = str(exc)
+        failures.append(failure)
+        if trace:
+            trace('WARN', f'KWin pointer read {attempt + 1}/3 failed: {failure}')
+        if attempt < 2:
+            time.sleep(.08)
+    raise RuntimeError('No live pointer coordinates from KWin after 3 reads: ' +
+                       failures[-1] + '. Use Reconnect pointer, then Check setup. No cached coordinates were substituted.')
+
+
+def connect_pointer(trace=None):
+    """User-requested recovery. Start the static service without restarting consent."""
+    if IS_WINDOWS:
+        pointer_position(trace)
+        return pointer_health(trace)
+    run_cmd('systemctl', '--user', 'start', '--no-block', 'waytool.service', timeout=5, trace=trace)
+    deadline = time.monotonic() + 45
+    last_error = ''
+    while time.monotonic() < deadline:
+        try:
+            health = pointer_health()
+            pointer_position(trace)
+            return health
+        except RuntimeError as exc:
+            last_error = str(exc)
+            time.sleep(.5)
+    raise RuntimeError('Pointer connection did not become ready. Accept the desktop-control prompt, '
+                       'then try Reconnect pointer again. Details: ' + last_error)
+
 
 def move_to(point, trace=None):
     x,y = point
@@ -341,7 +383,12 @@ def browser_audio_state(browser):
 def pointer_health(trace=None):
     if IS_WINDOWS:
         return f'Windows SendInput ready; pointer {pointer_position()}'
-    result=run_cmd('waytool','monitors',timeout=20,trace=trace)
+    try:
+        result = run_cmd('waytool', 'monitors', timeout=3, trace=trace)
+        parse_waytool_monitors(result)
+    except (RuntimeError, ValueError) as exc:
+        raise RuntimeError('Pointer control is unavailable. Click Reconnect pointer and accept '
+                           'the desktop-control prompt. Details: ' + str(exc)) from exc
     return result.strip()
 
 def diagnostics():

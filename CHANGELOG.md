@@ -1,6 +1,18 @@
 # Changelog
 
-## Unreleased — licensing
+## [3.1.1] — 2026-11-23
+
+- Retry up to three fresh KWin coordinate queries for empty, malformed or failed
+  reads, serializing kdotool commands from app workers. Never use cached or target
+  coordinates to pass click verification.
+- Add a visible Reconnect pointer action to start the static waytool service and
+  wait for desktop permission without moving or clicking. Arm and Save check input
+  readiness first; reconnect never arms automatically.
+- Keep strict positioning checks and explain pointer recovery in the README.
+- Include the prospective custom license and preserved MIT notice in installations.
+  Published older releases keep their original licenses.
+
+## Licensing introduced after 3.1.0
 
 - Adopt the EG-Clicker Free Use / No Modifications License 1.0 for future
   distributions: free personal/noncommercial use and commercial use below 100
@@ -40,3 +52,5 @@
 - Pinned waytool checksums and signed build-provenance verification before downloaded RPM installation.
 
 [3.1.0]: https://github.com/jmebrohart-maker/EG-Clicker/releases/tag/v3.1.0
+
+[3.1.1]: https://github.com/jmebrohart-maker/EG-Clicker/releases/tag/v3.1.1
